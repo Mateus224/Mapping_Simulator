@@ -4,12 +4,16 @@ import os
 import numpy as np
 import torch
 from torch import optim
+from torchsummary import summary
 from torch.nn.utils import clip_grad_norm_
 from torchsummary import summary
 from numpy.random import default_rng
 rng = default_rng(12345)
 #
 from Agents.multiagent_rainbow.model import DQN, DQN_ResNet, ResBlock
+
+from numpy.random import default_rng
+rng = default_rng(12345)
 
 
 class Multiagent_rainbow():
@@ -55,8 +59,8 @@ class Multiagent_rainbow():
     self.optimiser = optim.Adam(self.online_net.parameters(), lr=args.learning_rate, eps=args.adam_eps)
 
   # Resets noisy weights in all linear layers (of online net only)
-  #def reset_noise(self):
-  #  self.online_net.reset_noise()
+  def reset_noise(self):
+    self.online_net.reset_noise()
 
   # Acts based on single state (no batch)
   def make_action(self, state):
@@ -131,9 +135,11 @@ class Multiagent_rainbow():
   def eval(self):
     self.online_net.eval()
 
-  def epsilon_greedy(self,T,state):
-    if (1000000>T):
-      prob=(1000000-T)/1000000
+
+  def epsilon_greedy(self,T, max,state):
+    if (max>T):
+      prob=(max-T)/max
+
       if rng.random()<prob:
         action=np.random.randint(8)
       else:

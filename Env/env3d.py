@@ -29,8 +29,6 @@ class Env(object):
         self.yn = self.env_shape[1]
         self.zn = self.env_shape[2]
         self.map=np.zeros((self.xn,self.yn,self.zn,3))
-        self._entr_map=np.zeros((self.xn,self.yn))
-        self.t = None
         self.viewer = None
         self.ent = None
         self.episode=0
@@ -94,7 +92,6 @@ class Env(object):
         self.obstacles[obst[4]+1,:]=0
         self.obstacles[:,obst[5]]=0
         self.obstacles[:,obst[5]+1]=0
-        self.entr_map=np.where(self.obstacles==1, -1, self.entr_map)
         self.entr_map=np.where(self.obstacles==1, 0, self.entr_map)
         self.loaded_env.map_2_5D[:,:,0]=np.where(self.obstacles==1, plane, 0)
         self.start_entr_map = np.sum(self.entr_map)
@@ -137,7 +134,7 @@ class Env(object):
             #self.position2_5D_R[x-1:x+2,y-1:y+2]=self.pose.pose_matrix[:3,:3]
         stack=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         belief=np.concatenate((stack,np.expand_dims(ent, axis=-1)), axis=-1)
-        height=np.concatenate(belief,np.expand_dims(self.position2_5D, axis=-1), axis=-1)
+        #height=np.concatenate(belief,np.expand_dims(self.position2_5D, axis=-1), axis=-1)
         #state=np.concatenate((height,np.expand_dims(self.position2_5D_R, axis=-1)), axis=-1)
         state=height
         
@@ -158,7 +155,9 @@ class Env(object):
         state_pose= state_pose.astype(np.uint8)
         cv2.imshow('image3',state_pose)
 
-        entr=self._entr_map*255   
+
+        entr=self.entr_map*255   
+
         entr= entr.astype(np.uint8)
         cv2.imshow('image',entr)
         cv2.waitKey(1)

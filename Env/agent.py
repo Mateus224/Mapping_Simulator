@@ -114,20 +114,21 @@ class AgentDispatcher():
         
         #entropy[int(self.uuv.pose.pose_matrix[0,3]),int(self.uuv.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uuv.pose.pose_matrix[0,3]),int(self.uuv.pose.pose_matrix[1,3])]
         if done:
-            reward_uav=-1
+            reward_uav=-0.35
         else:
             reward_uav=entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]-0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
             entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
         return entropy, reward_uav, done
 
 
-    def greedy_multiagent_chose_action(self):
-        action_new=self.uav.sim_greedy(uav_action, self.uav.pose.pose_matrix, self.uav.sensor_model.sensor_matrix)
+    def greedy_multiagent_chose_action(self, belief):
+        action_new=self.sim_greedy(belief)
         return action_new
 
-    def sim_greedy(self):
-        self.uav.sim_greedy()
-        self.uuv.sim_greedy()
+    def sim_greedy(self, belief):
+        uav_action=self.uav.sim_greedy(belief, self.update_map)
+        #uuv_action=self.uuv.sim_greedy(belief, self.update_map)
+        return uav_action #, uuv_action
     
 #    def read_sensors(self,belief):
 #        self.update_map.clear()
@@ -187,9 +188,9 @@ class Agent():
         self.sensor_model.reset(self.map, self.pose, self.hashmap)
 
 
-    def sim_greedy(self):
+    def sim_greedy(self, belief, update_map):
         action_new=0
-        H_old=0
+        B_old=0
         R_t=np.eye(4)
         for action in range(8):#self.env.ACTIONS.shape[0]):
             new_position=self.pose.pose_matrix[:3,3] + self.actions.ACTIONS[action][:3]
@@ -205,7 +206,7 @@ class Agent():
                 self.pose.Sim_pose_matrix=np.matmul(self.pose.pose_matrix[:3,:3],R_t[:3,:3]) 
                 self.sensor_model.Sim_sensor_matrix[:,:,:3,:3]= np.matmul(self.pose.Sim_pose_matrix[:3,:3],self.sensor_model.sensor_matrix_init[:,:,:3,:3])
                 self.Sim_legal_action=True
-                H, B=self.sensor_model.readSonarData(sens_steps=5, simulate=True)
+                H, B=self.sensor_model.readSonarData( belief, update_map, 0, sens_steps=5, simulate=True)
                 if B>B_old:
         
                     B_old=B
@@ -252,6 +253,7 @@ class Agent():
             return True
         else:
             return False
+
 
 
     def collision(self,new_pos):

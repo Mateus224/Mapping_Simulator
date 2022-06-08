@@ -79,6 +79,7 @@ class ResBottleneckBlock(nn.Module):
         input = input + shortcut
         return nn.ReLU()(input)
 
+
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, downsample):
         super().__init__()
@@ -86,8 +87,10 @@ class ResBlock(nn.Module):
             self.conv1 = nn.Conv2d(
                 in_channels, out_channels, kernel_size=3, stride=2, padding=1)
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2),
-                nn.BatchNorm2d(out_channels)
+
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2)#,
+                #nn.BatchNorm2d(out_channels)
+
             )
         else:
             self.conv1 = nn.Conv2d(
@@ -96,13 +99,14 @@ class ResBlock(nn.Module):
 
         self.conv2 = nn.Conv2d(out_channels, out_channels,
                                kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+
+        #self.bn1 = nn.BatchNorm2d(out_channels)
+        #self.bn2 = nn.BatchNorm2d(out_channels)
 
     def forward(self, input):
         shortcut = self.shortcut(input)
-        input = nn.ReLU()(self.bn1(self.conv1(input)))
-        input = nn.ReLU()(self.bn2(self.conv2(input)))
+        input = nn.ReLU()(self.conv1(input))
+        input = nn.ReLU()(self.conv2(input))
         input = input + shortcut
         return nn.ReLU()(input)
 
@@ -112,11 +116,13 @@ class DQN_ResNet(nn.Module):
     super(DQN_ResNet, self).__init__()
     self.atoms = args.atoms
     self.action_space = action_space
-    filters = [256, 256, 256, 512, 512]
+
+    filters = [128, 128, 256, 512, 1024]
     self.layer0 = nn.Sequential(
-      nn.Conv2d(2, 256, kernel_size=3, stride=1, padding=1),
+      nn.Conv2d(2, 128, kernel_size=3, stride=1, padding=1),
       #nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-      nn.BatchNorm2d(256),
+      #nn.BatchNorm2d(64),
+
       nn.ReLU())
 
     self.layer1 = nn.Sequential()
@@ -125,36 +131,29 @@ class DQN_ResNet(nn.Module):
             self.layer1.add_module('conv2_%d'%(i+1,), ResBlock(filters[1], filters[1], downsample=False))
 
     self.layer2 = nn.Sequential()
-    self.layer2.add_module('conv3_1', ResBlock(filters[1], filters[2], downsample=False))
+
+    self.layer2.add_module('conv3_1', ResBlock(filters[1], filters[2], downsample=True))
+
     for i in range(1, repeat[1]):
             self.layer2.add_module('conv3_%d' % (
                 i+1,), ResBlock(filters[2], filters[2], downsample=False))
 
-    self.layer3 = nn.Sequential()
-    self.layer3.add_module('conv4_1', ResBlock(filters[2], filters[3], downsample=True))
-    for i in range(1, repeat[2]):
-        self.layer3.add_module('conv4_%d' % (
-            i+1,), ResBlock(filters[3], filters[3], downsample=False))
+
+    #self.layer3 = nn.Sequential()
+    #self.layer3.add_module('conv4_1', ResBlock(filters[2], filters[3], downsample=True))
+    #for i in range(1, repeat[2]):
+    #    self.layer3.add_module('conv4_%d' % (
+    #        i+1,), ResBlock(filters[3], filters[3], downsample=False))
 
     #self.layer4 = nn.Sequential()
-    #self.layer4.add_module('conv5_1', ResBlock(filters[3], filters[4], downsample=False))
+    #self.layer4.add_module('conv5_1', ResBlock(filters[3], filters[4], downsample=True))
     #for i in range(1, repeat[3]):
     #    self.layer4.add_module('conv5_%d'%(i+1,),ResBlock(filters[4], filters[4], downsample=False))
 
-    #self.convs = nn.Sequential(nn.Conv2d(2, 128, 4, stride=1, padding=1), nn.ReLU(),
-    #                             nn.Conv2d(128, 128, 3, stride=1, padding=0), nn.ReLU(),
-    #                             nn.Conv2d(128, 256, 2, stride=1, padding=0), nn.ReLU(), nn.Flatten())
-    #self.num_features_before_fcnn = functools.reduce(operator.mul, list(self.convs(torch.rand(1, *(2,16,16))).shape))
-    #self.conv_output_size = 3136
+    self.dense = nn.Sequential(spectral_norm(nn.Linear(16384, 1024)), nn.ReLU())
+    self.fc_h_v = NoisyLinear(1024, 512, std_init=args.noisy_std)
+    self.fc_h_a = NoisyLinear(1024, 512, std_init=args.noisy_std)
 
-
-    #self.fc_h_v = NoisyLinear(32768, 512, std_init=args.noisy_std)
-    #self.fc_h_a = NoisyLinear(32768, 512, std_init=args.noisy_std)
-    #self.fc_z_v = NoisyLinear(512, self.atoms, std_init=args.noisy_std)
-    #self.fc_z_a = NoisyLinear(512, action_space * self.atoms, std_init=args.noisy_std)   
-
-    self.fc_h_v = spectral_norm(nn.Linear(32768, 512))
-    self.fc_h_a = spectral_norm(nn.Linear(32768, 512))
     self.fc_z_v = NoisyLinear(512, self.atoms, std_init=args.noisy_std)
     self.fc_z_a = NoisyLinear(512, action_space * self.atoms, std_init=args.noisy_std) 
 
@@ -162,10 +161,12 @@ class DQN_ResNet(nn.Module):
     input = self.layer0(x)
     input = self.layer1(input)
     input = self.layer2(input)
-    input = self.layer3(input)
+
+    #input = self.layer3(input)
     #input = self.layer4(input)
     input = torch.flatten(input, start_dim=1)
-    #input = self.dense(input)
+    input = self.dense(input)
+
     v_uuv = self.fc_z_v(F.relu(self.fc_h_v(input)))  # Value stream
     a_uuv = self.fc_z_a(F.relu(self.fc_h_a(input)))  # Advantage stream
 
@@ -187,10 +188,6 @@ class DQN_ResNet(nn.Module):
       if 'fc_z' in name:
         module.reset_noise()
 
-  #def reset_noise(self):
-  #  for name, module in self.named_children():
-  #    if 'fc' in name:
-  #      module.reset_noise()
 
 class DQN(nn.Module):
   def __init__(self, args, action_space):
@@ -202,16 +199,16 @@ class DQN(nn.Module):
                                  nn.Conv2d(128, 256, 2, stride=1, padding=0), nn.ReLU(), nn.Flatten())
     self.num_features_before_fcnn = functools.reduce(operator.mul, list(self.convs(torch.rand(1, *(2,16,16))).shape))
     #self.conv_output_size = 3136
-    self.dense = nn.Sequential(nn.Linear(self.num_features_before_fcnn, 512), nn.ReLU())
-    self.fc_h_v = NoisyLinear(512, 512, std_init=args.noisy_std)
-    self.fc_h_a = NoisyLinear(512, 512, std_init=args.noisy_std)
+    #self.dense = nn.Sequential(nn.Linear(self.num_features_before_fcnn, 512), nn.ReLU())
+    self.fc_h_v = NoisyLinear(self.num_features_before_fcnn, 512, std_init=args.noisy_std)
+    self.fc_h_a = NoisyLinear(self.num_features_before_fcnn, 512, std_init=args.noisy_std)
     self.fc_z_v = NoisyLinear(512, self.atoms, std_init=args.noisy_std)
     self.fc_z_a = NoisyLinear(512, action_space * self.atoms, std_init=args.noisy_std)
 
   def forward(self, x, log=False):
     x = self.convs(x)
     #x = x.view(-1, self.num_features_before_fcnn)
-    x = self.dense(x)
+    #x = self.dense(x)
     #x = x.view(-1, self.conv_output_size)
     #v_uav = self.fc_z_v(F.relu(self.fc_h_v(x)))  # Value stream
     #a_uav = self.fc_z_a(F.relu(self.fc_h_a(x)))  # Advantage stream

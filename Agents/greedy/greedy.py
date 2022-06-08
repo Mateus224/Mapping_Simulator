@@ -33,7 +33,7 @@ class greedy():
 
 
     def make_action(self, obs):
-        self.action= self.env.agentDispatcher.greedy_multiagent_action()
+        self.action= self.env.agentDispatcher.greedy_multiagent_chose_action(self.env.belief)
         return self.action
 
 

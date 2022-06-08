@@ -5,8 +5,8 @@ from Agents.DDDQN.DDDQN_agent import DDDQN_agent
 from Agents.multiagent_rainbow.test import test
 from Agents.multiagent_rainbow.agent import Multiagent_rainbow
 from Agents.multiagent_rainbow.memory import ReplayMemory
-from Agents.lawnMower import lawnMower
-from Agents.greedy import greedy
+from Agents.lawnMower.lawnMower import lawnMower
+from Agents.greedy.greedy import greedy
 from random import random
 import torch
 import os
@@ -20,8 +20,8 @@ from tqdm import trange
 def init(args, env, agent, config):
 
     global obs
-    mem = ReplayMemory(args, 5000000)
-    priority_weight_increase = (1 - args.priority_weight) / (args.T_max - args.learn_start)
+
+
     List2_columns=1
     List1_row=40
     s = [[ 0 for x in range(List2_columns)] for i in range (List1_row)]
@@ -33,31 +33,40 @@ def init(args, env, agent, config):
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
+            mem = ReplayMemory(args, 4000000)
+            priority_weight_increase = (1 - args.priority_weight) / (args.T_max - args.learn_start)
             results_dir = os.path.join('results', args.id)
             if not os.path.exists(results_dir):
                 os.makedirs(results_dir)
-            T, done = 0, True
+            T, done = 0, False
             sum_reward=0
+            state, _ = env.reset()
             for T in trange(1, int(args.num_steps)):
                 if done:
-                    print(sum_reward,'------',sum_reward/env.start_entr_map)
+                    print(sum_reward,'------',(sum_reward+0.35)/env.start_entr_map)
+                    sum_reward=0
+
                     sum_reward=0
                     state, _ = env.reset()
-
+                if T<50000:
+                    action=np.random.randint(8)
+                else:
+                    action = agent.epsilon_greedy(T,500000, state)
                 #if T % args.replay_frequency == 0:
+
+                agent.reset_noise()  # Draw a new set of noisy weights
+
                 #agent.reset_noise()  # Draw a new set of noisy weights
 
                   # Choose an action greedily (with noisy weights)
-                if T<80000:
-                    action=np.random.randint(8)
-                else:
-                    action = agent.epsilon_greedy(T,state)
+
                 next_state, reward, done, _ = env.step(action)  # Step
                 sum_reward=sum_reward+reward
                 mem.append(state, action, reward, done)  # Append transition to memory
 
                 # Train and test
-                if T >= 60000:#args.learn_start:
+
+                if T >= 50000:#args.learn_start:
                     mem.priority_weight = min(mem.priority_weight + priority_weight_increase, 1)  # Anneal importance sampling weight β to 1
 
                 #if T % args.replay_frequency == 0:
@@ -102,7 +111,7 @@ def init(args, env, agent, config):
                 
                 action = agent.make_action(obs)
                 
-                obs, reward, donea, entropy = env.step(action, lm=False, agent="DDDQN")
+                obs, reward, done, entropy = env.step(action, lm=False, agent="DDDQN")
                 #if(j%1000==0):
                 t1 = time.time()
                 print(t1-t0, 'tot')

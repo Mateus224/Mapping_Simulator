@@ -11,7 +11,7 @@ import functools
 import operator
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
-from Agents.ppo_model import ResNet, ResBlock
+from Agents.ppo.ppo_model import ResNet, ResBlock
 
 
 """

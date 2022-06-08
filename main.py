@@ -4,11 +4,11 @@ import argparse
 import configparser
 import render_UUV_env as env3D
 import run_terminal as env_terminal
-from Agents.lawnMower import lawnMower
-from Agents.greedy import greedy
+from Agents.lawnMower.lawnMower import lawnMower
+from Agents.greedy.greedy import greedy
 
-from Agents.random_agent import random_agent 
-from Agents.ppo_agent import ppo_agent
+from Agents.random.random_agent import random_agent 
+from Agents.ppo.ppo_agent import ppo_agent
 from Env.env3d import  Env
 from Env.load_env import Load_env
 
@@ -52,8 +52,9 @@ def parse():
     parser.add_argument('--learn-start', type=int, default=int(20e3), metavar='STEPS', help='Number of steps before starting training')
     parser.add_argument('--evaluation-interval', type=int, default=12000, metavar='STEPS', help='Number of training steps between evaluations')
     parser.add_argument('--target-update', type=int, default=int(8e3), metavar='τ', help='Number of steps after which to update target network')
-    parser.add_argument('--id', type=str, default='spectralNorm', help='Experiment ID')
-    parser.add_argument('--checkpoint-interval', default=50000, help='How often to checkpoint the model, defaults to 0 (never checkpoint)')
+    parser.add_argument('--id', type=str, default='test02', help='Experiment ID')
+    parser.add_argument('--checkpoint-interval', default=11000, help='How often to checkpoint the model, defaults to 0 (never checkpoint)')
+
     
     try:
         from argument import add_arguments

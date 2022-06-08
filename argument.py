@@ -13,13 +13,13 @@ def add_arguments(parser):
     parser.add_argument('--batch_size', type=int, default = 32, help='Mini batch size')
     parser.add_argument('--target_update_interval', type=int, default = 10000, help='The frequency with which the target network is updated')
     parser.add_argument('--train_interval', type=int, default = 4, help='The agent selects 4 actions between successive updates')
-    parser.add_argument('--learning_rate', type=float, default = 0.0001, help='Learning rate used by RMSProp')
+    parser.add_argument('--learning_rate', type=float, default = 0.000001, help='Learning rate used by RMSProp')
     parser.add_argument('--min_grad', type=float, default = 1e-8, help='Constant added to the squared gradient in the denominator of the RMSProp update')
     parser.add_argument('--save_interval', type=int, default = 25000, help='The frequency with which the network is saved')
     parser.add_argument('--no_op_steps', type=int, default = 10, help='Maximum number of "do nothing" actions to be performed by the agent at the start of an episode')
     parser.add_argument('--save_network_path', type=str, default = "saved_dqn_networks/", help='')
     parser.add_argument('--save_summary_path', type=str, default = "dqn_summary/", help='')
-    parser.add_argument('--model_path', type=str, default = "results/DQN01LoadTest/checkpoint.pth", help='model used during testing / visulization') #testmoreFilters.h5
+    parser.add_argument('--model_path', type=str, default = "results/test02/checkpoint.pth", help='model used during testing / visulization') #testmoreFilters.h5
     parser.add_argument('--exp_name', type=str, default = "", help='')
     parser.add_argument('--gpu_frac', type=float, default = 1.0, help='Set GPU use limit for tensorflow')
     parser.add_argument('--ddqn', type=bool, default = False, help='Set True to apply Double Q-learning')

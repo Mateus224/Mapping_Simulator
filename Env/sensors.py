@@ -3,6 +3,15 @@ import numpy as np
 import random
 import json
 
+
+
+def safe_log(x):
+    if x <= 0.:
+        return 0.
+    return np.log(x)
+safe_log = np.vectorize(safe_log)
+
+
 class BayesianSensor():
     def __init__(self, config, agent_key, pose):
         
@@ -93,8 +102,12 @@ class BayesianSensor():
                                 if hashkey in update_map:
                                     doneVoxel=doneVoxel+1
                                 else:
-                                    update_map[counter.value]=hashkey
-                                    counter.value +=1
+                                    if type(counter) == int: #for single agent
+                                        update_map[counter]=hashkey
+                                        counter +=1   
+                                    else:                     #for multi process agents                
+                                        update_map[counter.value]=hashkey
+                                        counter.value +=1
                                     #print(self.update_map[hashkey])
                                 #if test==True:
                                 #    continue
@@ -105,7 +118,7 @@ class BayesianSensor():
                                 if simulate!=True:
                                     self.updateBelief(belief,value,ray_z,x,y,j)
                                 else:
-                                    entropy = - (belief[x,y] * safe_log(belief[x,y]) + (1 - belief[x,y]) * safe_log(1 - self.belief[x,y]))
+                                    entropy = - (belief[x,y] * safe_log(belief[x,y]) + (1 - belief[x,y]) * safe_log(1 - belief[x,y]))
                                     self.h=self.h+np.abs(entropy)
                                     if (belief[x,y]<0.999 ):
                                         b=self.b+(doneVoxel*belief[x,y])
@@ -178,3 +191,4 @@ class BayesianSensor():
         fig.view_init()
 
         return fig, lines
+    
