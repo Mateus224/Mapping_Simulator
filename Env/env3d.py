@@ -25,10 +25,18 @@ class Env(object):
         json_env_shape=config.get('ENV','shape')
         list_env_shape=json.loads(json_env_shape)
         self.env_shape=np.array(list_env_shape)
+
         self.xn = self.env_shape[0]
         self.yn = self.env_shape[1]
         self.zn = self.env_shape[2]
         self.map=np.zeros((self.xn,self.yn,self.zn,3))
+        self.sub_env=config.getboolean('ENV','sub_env')
+        if self.sub_env:
+            self.sub_env_size=config.getint('ENV','sub_env_size')
+            assert (self.xn%self.sub_env_size and self.yn%self.sub_env_size)==0 , 'The sub environment must be a multiple of the original environment. Check your config.ini file.'
+            self.sub_bel=np.zeros((self.sub_env_size,self.sub_env_size))
+            self.sub_ent=np.zeros((self.sub_env_size,self.sub_env_size))
+            self.sub_uav_pos=np.zeros((3))
         self.viewer = None
         self.ent = None
         self.episode=0
@@ -62,7 +70,9 @@ class Env(object):
         pc=folder+map+format
         self.loaded_env=Load_env(self.env_shape)
         self.map, self.hashmap = self.loaded_env.load_VM(pc=pc, upSideDown=upSideDown)
-        self.belief=np.ones((self.map.shape[0],self.map.shape[1]))/2
+        self.belief=np.ones((self.xn,self.yn))/2
+        if self.sub_env:
+            self.sub_belief=np.ones((int(self.xn/self.sub_env_size), int(self.yn/self.sub_env_size)))/2
         self.tmp_coordinate_storage=np.zeros((self.env_shape[0],self.env_shape[1], self.env_shape[2]))
         self.reward_map_entr=np.zeros((self.env_shape[0],self.env_shape[1]))
         self.reward_map_bel=np.zeros((self.env_shape[0],self.env_shape[1]))
@@ -113,7 +123,15 @@ class Env(object):
     def observation_size(self):
         return 2 * self.N - 1
 
-    def get_observation(self):
+
+
+    def get_multiagent_observation(self):
+        """This method is for the use of a multiagent (2 agents) DRL algorithm 
+        which returns the state of the agent, which contains the posisition of 
+        the angent labaled with in a matrix initialised by -2. To differentiate
+        between both agents (which is not needed in our case because they are 
+        alway on different heights), however we are adding to the uav +2.
+        Beside the state we have a 2.5D representation of the map and the belief"""
         p=self.belief
         
         self.ent = self.calc_entropy(p)
@@ -129,14 +147,14 @@ class Env(object):
         self.auv_last_poseX,self.last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
         self.uuv_last_poseX,self.last_poseY =int(self.uuv_state_pos[0]), int(self.uuv_state_pos[1])
         if not self.done:
-            self.position2_5D[self.last_poseX,self.last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-            self.position2_5D[self.last_poseX,self.last_poseY]=200*((self.uuv_state_pos[2]/ self.zn) - 0.5)
+            self.position2_5D[self.last_poseX,self.last_poseY]=2+2*((self.uav_state_pos[2]/ self.zn) - 0.5)
+            self.position2_5D[self.last_poseX,self.last_poseY]=2*((self.uuv_state_pos[2]/ self.zn) - 0.5)
             #self.position2_5D_R[x-1:x+2,y-1:y+2]=self.pose.pose_matrix[:3,:3]
         stack=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         belief=np.concatenate((stack,np.expand_dims(ent, axis=-1)), axis=-1)
         #height=np.concatenate(belief,np.expand_dims(self.position2_5D, axis=-1), axis=-1)
         #state=np.concatenate((height,np.expand_dims(self.position2_5D_R, axis=-1)), axis=-1)
-        state=height
+        #state=height
         
         #test=self.belief*255   
         #entr= test.astype(np.uint8)
@@ -145,6 +163,12 @@ class Env(object):
         return state
 
     def get_observation_(self):
+        """This method is also for DRL for a 2D case where we also return the state of one agent.
+        We store in one of the matrixes the obstacles and the position of the agent and in the second
+        the entropy
+        
+        TODO: optimise speed no need to copy the obstacles"""    
+
         state_pose=np.copy(self.obstacles)
         self.uav_state_pos[0:2]=self.agentDispatcher.uav.pose.pose_matrix[:2,3]
         #self.uuv_state_pos[0:2]=self.agentDispatcher.uuv.pose.pose_matrix[:2,3]
@@ -162,6 +186,20 @@ class Env(object):
         cv2.imshow('image',entr)
         cv2.waitKey(1)
         return state
+
+
+    def get_lLevel_observation(self):
+        self.uav_state_pos[0:3]=self.agentDispatcher.uav.pose.pose_matrix[:3,3]
+        self.sub_uav_pos[0:2]= self.uav_state_pos[0:2]%self.sub_env_size 
+        self.sub_uav_pos[2]=self.uav_state_pos[2]
+        x_hL,y_hL= int(self.uav_state_pos[0]//self.sub_env_size),  int(self.uav_state_pos[1]//self.sub_env_size)
+        s_sub_env_x, s_sub_env_y = x_hL*self.sub_env_size, y_hL*self.sub_env_size
+        e_sub_env_x, e_sub_env_y = (x_hL+1*self.sub_env_size)-1, (y_hL+1*self.sub_env_size)-1
+        self.sub_ent=self.entr_map[s_sub_env_x:e_sub_env_x,s_sub_env_y:e_sub_env_y]
+        self.sub_bel=self.belief[s_sub_env_x:e_sub_env_x,s_sub_env_y:e_sub_env_y]
+        self.sub_map_2_5D=self.map_2_5D[s_sub_env_x:e_sub_env_x,s_sub_env_y:e_sub_env_y]
+
+        return self.sub_uav_pos, entropy, belief
 
     
     def deterministic_rewards(self, entr_new, belief): 

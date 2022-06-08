@@ -188,19 +188,28 @@ class Agent():
         self.sensor_model.reset(self.map, self.pose, self.hashmap)
 
 
-    def sim_greedy(self, belief, update_map):
+    def sim_greedy(self, belief, update_map, action_space=0, sub_map_border=None):
+        """Simulates all possible actions and takes a greedy action
+        TODO: multi process
+
+        PARAMETERS
+        ----------
+        
+        action_space: defines which action set is takes from the Action Class."""
         action_new=0
         B_old=0
         R_t=np.eye(4)
-        for action in range(8):#self.env.ACTIONS.shape[0]):
-            new_position=self.pose.pose_matrix[:3,3] + self.actions.ACTIONS[action][:3]
-            if self.legal_change_in_pose(new_position):
-                #if(action%7==1 or action%7==2):
-                #    R_t=matrix_from_axis_angle([1, 0, 0, self.actions.ACTIONS[action][3]])
-                #elif(action%7==3 or action%7==4):
-                #    R_t=matrix_from_axis_angle([0, 1, 0, self.actions.ACTIONS[action][4]])
-                #elif(action%7==5 or action%7==6):
-                #    R_t=matrix_from_axis_angle([0, 0, 1, self.actions.ACTIONS[action][5]])  
+        if action_space==0:
+            action_set = self.actions.ACTIONS2D
+        elif action_space==1:
+            action_set = self.actions.ACTIONS3D
+        for action in action_set[0]:
+            new_position=self.pose.pose_matrix[:3,3] + action_set[action][:3]
+            if self.legal_change_in_pose(new_position,sub_map_border):
+                R_t=np.matmul(np.matmul(matrix_from_axis_angle([1, 0, 0, action_set[action][3]]), \
+                    matrix_from_axis_angle([0, 1, 0, action_set[action][4]])), \
+                    matrix_from_axis_angle([0, 0, 1, action_set[action][5]]))
+
                 self.sensor_model.Sim_sensor_matrix=self.sensor_model.sensor_matrix.copy()
                 self.sensor_model.Sim_sensor_matrix[:,:,:3,3]=new_position
                 self.pose.Sim_pose_matrix=np.matmul(self.pose.pose_matrix[:3,:3],R_t[:3,:3]) 
@@ -215,38 +224,54 @@ class Agent():
         return action_new
         #self.make_action(action_new, simulate=False)
 
-    def make_action(self, action, np_pose_matrix, np_sensor_matrix=None, lm=False):
+    def make_action(self, action, np_pose_matrix, np_sensor_matrix=None, action_space=0):        
+        """Is implemented for multiprocess if np_sensor_matrix is not None we store there the new matrix
+        PARAMETERS
+        ----------
+        
+        action_space: defines which action set is takes from the Action Class."""
         R_t=np.eye(4)
-        if lm==False:
-            new_position=np_pose_matrix[:3,3] + self.actions.ACTIONS[action][:3]
-            if self.legal_change_in_pose(new_position):
-                ## np.matmul(self.pose.pose_matrix[:3,:3],self.ACTIONS[a][:3])###<-------s
-                #if(action%7==1 or action%7==2):
-                #    R_t=matrix_from_axis_angle([1, 0, 0,self.ACTIONS[action][3]])
-                #elif(action%7==3 or action%7==4):
-                #    R_t=matrix_from_axis_angle([0, 1, 0,self.ACTIONS[action][4]])
-                #elif(action%7==5 or action%7==6):
-                #    R_t=matrix_from_axis_angle([0, 0, 1,self.ACTIONS[action][5]])  
-                
-                #self.sensor_model.sensor_matrix=self.sensor_model.sensor_matrix.copy()
-                np_pose_matrix[:3,3]= new_position
-                np_pose_matrix[:3,:3]= np.matmul(np_pose_matrix[:3,:3],R_t[:3,:3])
-                np_sensor_matrix[:,:,:3,3]= new_position
-                np_sensor_matrix[:,:,:3,:3]= np.matmul(np_pose_matrix[:3,:3],self.sensor_model.sensor_matrix_init[:,:,:3,:3])
-                return False
-            else:
-                return True
+        if action_space==0:
+            action_set = self.actions.ACTIONS2D
+        elif action_space==1:
+            action_set = self.actions.ACTIONS3D
+        new_position=np_pose_matrix[:3,3] + action_set[action][:3]
+        if self.legal_change_in_pose(new_position):
+            R_t=np.matmul(np.matmul(matrix_from_axis_angle([1, 0, 0,action_set[action][3]]), \
+                matrix_from_axis_angle([0, 1, 0, action_set[action][4]])), \
+                matrix_from_axis_angle([0, 0, 1, action_set[action][5]]))
+            ## np.matmul(self.pose.pose_matrix[:3,:3],self.ACTIONS[a][:3])###<---action in agents coordinates
+            np_pose_matrix[:3,3]= new_position
+            np_pose_matrix[:3,:3]= np.matmul(np_pose_matrix[:3,:3],R_t[:3,:3])
+            np_sensor_matrix[:,:,:3,3]= new_position
+            np_sensor_matrix[:,:,:3,:3]= np.matmul(np_pose_matrix[:3,:3],self.sensor_model.sensor_matrix_init[:,:,:3,:3])
+            return False
+        else:
+            return True
 
-        elif lm==True:
-            if a<6:
-                new_position=self.pose.pose_matrix[:3,3] + self.actions.ACTIONS[a][:3]# np.matmul(self.pose.pose_matrix[:3,:3],self.ACTIONS[a][:3])###<-------s
-                if not self.legal_change_in_pose(new_position):
-                    self.done=True
+        #elif lm==True:
+        #    if a<6:
+        #        new_position=self.pose.pose_matrix[:3,3] + self.actions.ACTIONS[a][:3]# np.matmul(self.pose.pose_matrix[:3,:3],self.ACTIONS[a][:3])###<-------s
+        #        if not self.legal_change_in_pose(new_position):
+        #            self.done=True
     
     
     def in_map(self, new_pos):
         return new_pos[0] >= 0 and new_pos[1] >= 0 and new_pos[0] <= (self.xn-1) and new_pos[1] <= (self.yn-1) and new_pos[2] >= 0 and new_pos[2] <= (self.zn/2)+2#(self.zn/2-1)
 
+    def in_sub_map(self, new_pos,sub_map_border):
+        """Checks if an agents action is still in the boarders of the underlying sub environment.
+        
+        Parameters
+        ----------
+        new_pos : numpy array
+            The current position of the agent
+            
+        sub_map_border: numpy array
+            The bparders of the underlying sub environment where the order is [sub_x0,sub_xn,sub_y0,sub_yn]
+            """
+        return new_pos[0] >= sub_map_border[0] and new_pos[1] >= sub_map_border[2] and new_pos[0] <= sub_map_border[1] and new_pos[1] <= sub_map_border[3]
+    
     def _2Dcollision(self, new_pos):
         if self.real_2_D_map[int(new_pos[0]),int(new_pos[1]),0]>=new_pos[2]:
             #print("COLLISION ! ! !", new_pos[0],int(new_pos[1]),int(new_pos[2]))
@@ -275,9 +300,11 @@ class Agent():
             return True
 
 
-    def legal_change_in_pose(self,new_position): 
-        if self.in_map(new_position) and not self._2Dcollision(new_position):#self.collision(new_position):
-            return True
+    def legal_change_in_pose(self, new_position, sub_map_border=None, _2D=True): 
+        in_sub_map=True
+        if sub_map_border!=None:
+            in_sub_map=self.in_sub_map(new_position, sub_map_border)
+        if _2D:
+            return self.in_map(new_position) and not self._2Dcollision(new_position) and in_sub_map
         else:
-            return False
-    
+            return self.in_map(new_position) and self.collision(new_position) and in_sub_map
