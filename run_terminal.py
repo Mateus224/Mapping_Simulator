@@ -33,7 +33,7 @@ def init(args, env, agent, config):
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
-            mem = ReplayMemory(args, 4000000)
+            mem = ReplayMemory(args, args.num_replay_memory, env)
             priority_weight_increase = (1 - args.priority_weight) / (args.T_max - args.learn_start)
             results_dir = os.path.join('results', args.id)
             if not os.path.exists(results_dir):

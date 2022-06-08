@@ -162,29 +162,31 @@ class Env(object):
         #cv2.waitKey(1)
         return state
 
-    def get_observation_(self):
-        """This method is also for DRL for a 2D case where we also return the state of one agent.
-        We store in one of the matrixes the obstacles and the position of the agent and in the second
-        the entropy
-        
-        TODO: optimise speed no need to copy the obstacles"""    
 
+    def get_hLevel_observation(self):
+        """calculates the high level map. It is implemented fpr a 2D case where we also return the 
+        state of one agent (for RL).
+        We store in one of the matrixes the obstacles and the position of the agent and in the second
+        the entropy.
+        
+        TODO: optimise speed no need to copy the obstacles"""
         state_pose=np.copy(self.obstacles)
         self.uav_state_pos[0:2]=self.agentDispatcher.uav.pose.pose_matrix[:2,3]
         #self.uuv_state_pos[0:2]=self.agentDispatcher.uuv.pose.pose_matrix[:2,3]
         if self.done== False:
             state_pose[int(self.uav_state_pos[0]), int(self.uav_state_pos[1])]=2
         state=np.concatenate([np.expand_dims(self.entr_map,axis=-1), np.expand_dims(state_pose, axis=-1)], axis=-1)
+        
+        
         state_pose=state_pose*255   
         state_pose= state_pose.astype(np.uint8)
         cv2.imshow('image3',state_pose)
-
-
         entr=self.entr_map*255   
-
         entr= entr.astype(np.uint8)
         cv2.imshow('image',entr)
         cv2.waitKey(1)
+
+
         return state
 
 
@@ -244,7 +246,7 @@ class Env(object):
         #if agent=="DDDQN" or agent=="PPO":
         #    entr_new=self.calc_reward()
         
-        return self.get_observation_(), self.reward, self.done, None#np.sum(entr_new)
+        return self.get_hLevel_observation(), self.reward, self.done, None#np.sum(entr_new)
 
     # Uses loss of life as terminal signal
     def train(self):
