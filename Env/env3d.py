@@ -244,8 +244,7 @@ class Env(object):
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)
         else:
             self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
-            #self.belief = self.agentDispatcher.multiprocess_action( self.belief,a, lm=lm)
-            self.entr_map, self.reward, self.done = self.agentDispatcher.singleprocess_action(self._entr_map,a,3)
+            self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.belief,a,a,)
         if self.t >= 700:#self.episode_length:
             self.done= True  
         #if agent=="DDDQN" or agent=="PPO":

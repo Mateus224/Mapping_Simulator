@@ -65,6 +65,7 @@ class AgentDispatcher():
         
 
     def multiprocess_action(self, belief, uav_action=0, uuv_action=0):
+        """Is implemented just for the low level layer because it makes no sense to use it on the fast high level layer"""
         uav_action=0
         uuv_action=2
         self.belief=belief
@@ -103,8 +104,8 @@ class AgentDispatcher():
             UUVsensor_matrix = np.frombuffer(uuv_sensor_matrix.get_obj(),c.c_double) 
             self.uuv.sensor_model.sensor_matrix = UUVsensor_matrix.reshape(self.uuv.sensor_model.sensor_matrix.shape)  
 
-            ##define rewardfunction if needed##
-            reward= 0
+            ##define rewardfunction if needed reward has to be an 2x1 array##
+            reward= [0,0]
             
         return belief, reward, done=False
 
@@ -125,6 +126,13 @@ class AgentDispatcher():
             else:
                 self.uuv.sensor_model.readSonarData()
         return entropy, reward_uav, done
+    
+    def act(self, belief, uav_action, uuv_action, h_level=True, multiprocess=False):
+        if multiprocess:
+            belief, reward_uav, done=self.multiprocess_action(belief, uav_action=0, uuv_action=0)
+        else:
+            belief, reward_uav, done=self.singleprocess_action(entropy, uav_action, uuv_action, h_level=True)
+        return belief, reward_uav, done
 
 
     def greedy_multiagent_chose_action(self, belief):
