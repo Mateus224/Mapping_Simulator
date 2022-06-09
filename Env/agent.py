@@ -44,7 +44,7 @@ class AgentDispatcher():
         UAVsensor_matrix = np.frombuffer(uav_sensor_matrix.get_obj(),c.c_double)
         np_sensor_matrix = UAVsensor_matrix.reshape(self.uav.sensor_model.sensor_matrix.shape)   
 
-        self.uav.make_action(action,np_pose_matrix, np_sensor_matrix, lm=False)
+        self.uav.make_action(action,np_pose_matrix, np_sensor_matrix)
         self.uav.sensor_model.readSonarData(np_shared_belief, np_update_map,counter, sens_steps=5, simulate=False)  
 
 
@@ -60,11 +60,11 @@ class AgentDispatcher():
         np_sensor_matrix = UUVsensor_matrix.reshape(self.uuv.sensor_model.sensor_matrix.shape)
 
 
-        self.uuv.make_action(action, np_pose_matrix, np_sensor_matrix, lm=False)
+        self.uuv.make_action(action, np_pose_matrix, np_sensor_matrix)
         self.uuv.sensor_model.readSonarData(np_shared_belief, np_update_map,counter, sens_steps=5, simulate=False)
         
 
-    def multiprocess_action(self, belief, uav_action=0, uuv_action=0, lm=False):
+    def multiprocess_action(self, belief, uav_action=0, uuv_action=0):
         uav_action=0
         uuv_action=2
         self.belief=belief
@@ -101,9 +101,12 @@ class AgentDispatcher():
             UAVsensor_matrix = np.frombuffer(uav_sensor_matrix.get_obj(),c.c_double)   
             self.uav.sensor_model.sensor_matrix = UAVsensor_matrix.reshape(self.uav.sensor_model.sensor_matrix.shape)
             UUVsensor_matrix = np.frombuffer(uuv_sensor_matrix.get_obj(),c.c_double) 
-            self.uuv.sensor_model.sensor_matrix = UUVsensor_matrix.reshape(self.uuv.sensor_model.sensor_matrix.shape)   
+            self.uuv.sensor_model.sensor_matrix = UUVsensor_matrix.reshape(self.uuv.sensor_model.sensor_matrix.shape)  
+
+            ##define rewardfunction if needed##
+            reward= 0
             
-        return belief
+        return belief, reward, done=False
 
     def singleprocess_action(self, entropy, uav_action, uuv_action, h_level=True):
         done=self.uav.make_action(uav_action, self.uav.pose.pose_matrix, self.uav.sensor_model.sensor_matrix)
