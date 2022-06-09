@@ -105,7 +105,7 @@ class AgentDispatcher():
             
         return belief
 
-    def simple_multiagent_action(self, entropy, uav_action, uuv_action):
+    def singleprocess_action(self, entropy, uav_action, uuv_action, h_level=True):
         done=self.uav.make_action(uav_action, self.uav.pose.pose_matrix, self.uav.sensor_model.sensor_matrix)
         #self.uuv.make_action(uuv_action, self.uuv.pose.pose_matrix, self.uuv.sensor_model.sensor_matrix)
         #print(int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3]))
@@ -116,8 +116,11 @@ class AgentDispatcher():
         if done:
             reward_uav=-0.35
         else:
-            reward_uav=entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]-0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
-            entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
+            if h_level==True:
+                reward_uav=entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]-0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
+                entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
+            else:
+                self.uuv.sensor_model.readSonarData()
         return entropy, reward_uav, done
 
 
@@ -226,10 +229,13 @@ class Agent():
 
     def make_action(self, action, np_pose_matrix, np_sensor_matrix=None, action_space=0):        
         """Is implemented for multiprocess if np_sensor_matrix is not None we store there the new matrix
+
         PARAMETERS
         ----------
-        
-        action_space: defines which action set is takes from the Action Class."""
+
+        np_sensor_matrix: we store there the sesnor matrix in case we are using multiprozesses
+        action_space: defines which action set is takes from the Action Class.
+        """
         R_t=np.eye(4)
         if action_space==0:
             action_set = self.actions.ACTIONS2D
@@ -245,6 +251,7 @@ class Agent():
             np_pose_matrix[:3,:3]= np.matmul(np_pose_matrix[:3,:3],R_t[:3,:3])
             np_sensor_matrix[:,:,:3,3]= new_position
             np_sensor_matrix[:,:,:3,:3]= np.matmul(np_pose_matrix[:3,:3],self.sensor_model.sensor_matrix_init[:,:,:3,:3])
+            
             return False
         else:
             return True

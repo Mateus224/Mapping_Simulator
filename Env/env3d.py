@@ -110,6 +110,11 @@ class Env(object):
         return self.get_observation_() , self.map
 
 
+    def renderMatrix(self, matrix, name="image"):
+        matrix=self.matrix*255   
+        matrix= matrix.astype(np.uint8)
+        cv2.imshow(name,matrix)
+        cv2.waitKey(1)
 
     def calc_entropy(self, p_t):
         entropy = - (p_t * safe_log(p_t) + (1 - p_t) * safe_log(1 - p_t))
@@ -124,6 +129,11 @@ class Env(object):
         return 2 * self.N - 1
 
 
+    def get_observation(self):
+
+        return
+
+
 
     def get_multiagent_observation(self):
         """This method is for the use of a multiagent (2 agents) DRL algorithm 
@@ -131,7 +141,10 @@ class Env(object):
         the angent labaled with in a matrix initialised by -2. To differentiate
         between both agents (which is not needed in our case because they are 
         alway on different heights), however we are adding to the uav +2.
-        Beside the state we have a 2.5D representation of the map and the belief"""
+        Beside the state we have a 2.5D representation of the map and the belief
+        
+        TODO: Put the agents into a list. 
+        """
         p=self.belief
         
         self.ent = self.calc_entropy(p)
@@ -156,15 +169,12 @@ class Env(object):
         #state=np.concatenate((height,np.expand_dims(self.position2_5D_R, axis=-1)), axis=-1)
         #state=height
         
-        #test=self.belief*255   
-        #entr= test.astype(np.uint8)
-        #cv2.imshow('image',entr)
-        #cv2.waitKey(1)
+        #renderMatrix(self.belief)
         return state
 
 
     def get_hLevel_observation(self):
-        """calculates the high level map. It is implemented fpr a 2D case where we also return the 
+        """calculates the high level map. It is implemented for a 2D case where we also return the 
         state of one agent (for RL).
         We store in one of the matrixes the obstacles and the position of the agent and in the second
         the entropy.
@@ -177,13 +187,8 @@ class Env(object):
             state_pose[int(self.uav_state_pos[0]), int(self.uav_state_pos[1])]=2
         state=np.concatenate([np.expand_dims(self.entr_map,axis=-1), np.expand_dims(state_pose, axis=-1)], axis=-1)
         
-        
-        state_pose=state_pose*255   
-        state_pose= state_pose.astype(np.uint8)
-        cv2.imshow('image3',state_pose)
-        entr=self.entr_map*255   
-        entr= entr.astype(np.uint8)
-        cv2.imshow('image',entr)
+        renderMatrix(state_pose)
+        renderMatrix(entr_map, name="image2")
         cv2.waitKey(1)
 
 
@@ -231,7 +236,7 @@ class Env(object):
             self.litter_amount=self.litter/np.sum(self.real_2_D_map[:,:,1])
         return np.sum(entr_new)
     
-    def step(self, a, lm=False, agent=""):
+    def step(self, a, h_level=True, agent=""):
         self.t += 1
         self.reward = 0.0
         self.done = False
@@ -240,13 +245,15 @@ class Env(object):
         else:
             self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
             #self.belief = self.agentDispatcher.multiprocess_action( self.belief,a, lm=lm)
-            self.entr_map, self.reward, self.done = self.agentDispatcher.simple_multiagent_action(self._entr_map,a,3)
+            self.entr_map, self.reward, self.done = self.agentDispatcher.singleprocess_action(self._entr_map,a,3)
         if self.t >= 700:#self.episode_length:
             self.done= True  
         #if agent=="DDDQN" or agent=="PPO":
         #    entr_new=self.calc_reward()
-        
-        return self.get_hLevel_observation(), self.reward, self.done, None#np.sum(entr_new)
+        if h_level:
+            return self.get_hLevel_observation(), self.reward, self.done, None#np.sum(entr_new)
+        else:
+            return self.get_observation(), self.reward, self.done, None
 
     # Uses loss of life as terminal signal
     def train(self):
