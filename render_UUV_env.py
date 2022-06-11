@@ -43,7 +43,7 @@ def update_map(fig, step, belief, update_map):
 
 
 
-def animation_callback1(step, n_frames, frame, frame_debug, uav, uuv, uav_beams, uuv_beams, env, agent, fig):
+def animation_callback1(step, n_frames, frame, frame_debug, uav, uuv, uav_beams, uuv_beams, env, agent, fig, b_multiagent):
     global obs
     global sumreward
     reward=0
@@ -52,7 +52,8 @@ def animation_callback1(step, n_frames, frame, frame_debug, uav, uuv, uav_beams,
         action = agent.make_action(obs)
         obs, reward, done, entropy = env.step(action)
         uav_pose=env.agentDispatcher.uav.pose.pose_matrix.copy()
-        uuv_pose=env.agentDispatcher.uuv.pose.pose_matrix.copy()
+        if b_multiagent:
+            uuv_pose=env.agentDispatcher.uuv.pose.pose_matrix.copy()
 
         ##--uav stl model has to be centered--##
         uav_pose[0,3]=uav_pose[0,3]-2.1
@@ -67,15 +68,18 @@ def animation_callback1(step, n_frames, frame, frame_debug, uav, uuv, uav_beams,
         uav_beams, uuv_beams=env.agentDispatcher.render_sensors(uav_beams, uuv_beams)
         
         uav.set_data(uav_pose)
-        uuv.set_data(uuv_pose)
+        if b_multiagent:
+            uuv.set_data(uuv_pose)
         if(step>0):
             #first step ignor because of a visual bug
             update_map(fig, step, belief, update_map_)
     else:
         agent._plot_line()
 
-
-    return uav, uuv, uav_beams, uuv_beams
+    if b_multiagent:
+        return uav, uuv, uav_beams, uuv_beams
+    else:
+        return uav, uav_beams
 
 
 
@@ -124,7 +128,7 @@ def build_env(fig, env, surface_water):
 
     return fig
 
-def init_env(surface_water):
+def init_env(surface_water, b_multiagent):
 
     BASE_DIR = "Mashes/"
     data_dir = BASE_DIR
@@ -139,11 +143,14 @@ def init_env(surface_water):
     R = matrix_from_angle(2,3*np.pi/2)
     A2C = np.eye(4)
     A2C[:3, :3] = R
-    uuv = pv.Mesh("Mashes/uuv.stl",s=[0.3,0.225,0.3], c=[0.0,0.7,0.9])
+    if b_multiagent:
+        uuv = pv.Mesh("Mashes/uuv.stl",s=[0.3,0.225,0.3], c=[0.0,0.7,0.9])
+        uuv.add_artist2(fig)
+        uuv.add_artist(fig)
+    else:
+        uuv=None
     uav = pv.Mesh("Mashes/uav.stl",s=[0.5,0.5,0.5], c=[0.9,0.1,0.1])
     water = pv.Mesh("Mashes/water.stl",s=[0.005,0.005,0.005], c=[0.,0.,0.2])
-    uuv.add_artist2(fig)
-    uuv.add_artist(fig)
     uav.add_artist2(fig)
     uav.add_artist(fig)
     water.add_artist2(fig)
@@ -157,14 +164,14 @@ def init_env(surface_water):
 def init_render(args, agent, env, config):
 
     global obs
-
+    b_multiagent=config.getboolean('ENV','mutiagent')
     obs, voxelVis = env.reset(validation=True)
     surface_water=env.loaded_env._2_D_min+5
-    fig, uuv, uav, frame, frame_debug = init_env(surface_water)
+    fig, uuv, uav, frame, frame_debug = init_env(surface_water, b_multiagent)
     fig = build_env(fig, voxelVis, surface_water)
-    fig, uav_beams, uuv_beams = env.agentDispatcher.init_render_sensors(fig)
+    fig, uav_beams, uuv_beams = env.agentDispatcher.init_render_sensors(fig, b_multiagent)
     n_frames = 900
-    fig.animate(animation_callback1, n_frames, fargs=(n_frames, frame, frame_debug, uav, uuv, uav_beams, uuv_beams, env, agent, fig), loop=True)
+    fig.animate(animation_callback1, n_frames, fargs=(n_frames, frame, frame_debug, uav, uuv, uav_beams, uuv_beams, env, agent, fig, b_multiagent), loop=True)
     fig.show()
 
 

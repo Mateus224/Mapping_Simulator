@@ -27,6 +27,7 @@ class Pose:
 
 class AgentDispatcher():
     def __init__(self, config, xn,yn,zn):
+        self.b_multiagent=False
         self.uav=Agent(config, "UAV", xn, yn, zn)
         self.uuv=Agent(config, "UUV", xn, yn, zn)
         self.agent_list={self.uav,self.uuv}
@@ -167,14 +168,23 @@ class AgentDispatcher():
         return entropy
 
 
-    def init_render_sensors(self, fig):
-        fig, uav = self.uav.sensor_model.init_render_sensor(fig)
-        fig, uuv = self.uuv.sensor_model.init_render_sensor(fig)
+    def init_render_sensors(self, fig, b_multiagent):
+        self.b_multiagent=b_multiagent
+        if b_multiagent:
+            fig, uav = self.uav.sensor_model.init_render_sensor(fig)
+            fig, uuv = self.uuv.sensor_model.init_render_sensor(fig)
+        else:
+            fig, uav = self.uav.sensor_model.init_render_sensor(fig)
+            uuv=None
         return fig, uav, uuv
     
     def render_sensors(self, uav, uuv):
-        uav_beams = self.uav.sensor_model.render(uav)
-        uuv_beams = self.uuv.sensor_model.render(uuv)
+        if self.b_multiagent:
+            uav_beams = self.uav.sensor_model.render(uav)
+            uuv_beams = self.uuv.sensor_model.render(uuv)
+        else:
+            uav_beams = self.uav.sensor_model.render(uav)
+            uuv_beams=None
         return uav_beams, uuv_beams
 
 class Agent():

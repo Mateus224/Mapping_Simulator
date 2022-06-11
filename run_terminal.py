@@ -33,6 +33,7 @@ def init(args, env, agent, config):
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
+            timeout=False
             mem = ReplayMemory(args, args.num_replay_memory)
             priority_weight_increase = (1 - args.priority_weight) / (args.T_max - args.learn_start)
             results_dir = os.path.join('results', args.id)
@@ -42,7 +43,7 @@ def init(args, env, agent, config):
             sum_reward=0
             state, _ = env.reset()
             for T in trange(1, int(args.num_steps)):
-                if done:
+                if done or timeout:
                     print(sum_reward,'------',(sum_reward+0.35)/env.start_entr_map)
                     sum_reward=0
 
@@ -51,7 +52,7 @@ def init(args, env, agent, config):
                 if T<500:
                     action=np.random.randint(8)
                 else:
-                    action = agent.epsilon_greedy(T,500000, state)
+                    action = agent.epsilon_greedy(T,50000, state)
                 #if T % args.replay_frequency == 0:
 
                 agent.reset_noise()  # Draw a new set of noisy weights
@@ -60,7 +61,7 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, _ = env.step(action)  # Step
+                next_state, reward, done, timeout = env.step(action)  # Step
                 sum_reward=sum_reward+reward
                 mem.append(state, action, reward, done)  # Append transition to memory
 

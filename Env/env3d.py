@@ -50,6 +50,7 @@ class Env(object):
 
     def reset(self, episode_length=750, validation=False):
         self.entr_map=self.calc_entropy(np.ones((self.xn, self.yn))/2)
+        self.timeout=False
         gc.collect()# garbege collector
         self.done=False
         self.episode_length=episode_length
@@ -239,19 +240,20 @@ class Env(object):
         self.t += 1
         self.reward = 0.0
         self.done = False
+        
         if False:
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)
         else:
             self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
             self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level=False)
         if self.t >= 700:#self.episode_length:
-            self.done= True  
+            self.timeout = True  
         #if agent=="DDDQN" or agent=="PPO":
         #    entr_new=self.calc_reward()
         if h_level:
-            return self.get_hLevel_observation(), self.reward, self.done, None#np.sum(entr_new)
+            return self.get_hLevel_observation(), self.reward, self.done, self.timeout#np.sum(entr_new)
         else:
-            return self.get_observation(), self.reward, self.done, None
+            return self.get_observation(), self.reward, self.done, self.timeout
 
     # Uses loss of life as terminal signal
     def train(self):
