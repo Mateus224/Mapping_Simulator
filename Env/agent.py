@@ -10,6 +10,12 @@ import json
 import time
 
 
+def safe_log(x):
+    if x <= 0.:
+        return 0.
+    return np.log(x)
+safe_log = np.vectorize(safe_log)
+
 class Pose:
     def __init__(self):
         self.init_R= matrix_from_axis_angle([0,0,1,-np.pi/2])
@@ -106,11 +112,13 @@ class AgentDispatcher():
 
             ##define rewardfunction if needed reward has to be an 2x1 array##
             reward= [0,0]
+            done=False
             
-        return belief, reward, done=False
+        return belief, reward, done
 
     def singleprocess_action(self, entropy, uav_action, uuv_action, h_level=True):
         done=self.uav.make_action(uav_action, self.uav.pose.pose_matrix, self.uav.sensor_model.sensor_matrix)
+        #entropy=self.calc_entropy(belief)
         #self.uuv.make_action(uuv_action, self.uuv.pose.pose_matrix, self.uuv.sensor_model.sensor_matrix)
         #print(int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3]))
         
@@ -121,17 +129,18 @@ class AgentDispatcher():
             reward_uav=-0.35
         else:
             if h_level==True:
+                
                 reward_uav=entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]-0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
                 entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
             else:
-                self.uuv.sensor_model.readSonarData()
+                belief, update_map = self.uuv.sensor_model.readSonarData()
         return entropy, reward_uav, done
     
-    def act(self, belief, uav_action, uuv_action, h_level=True, multiprocess=False):
+    def act(self, belief, uav_action, uuv_action=None, h_level=True, multiprocess=False):
         if multiprocess:
             belief, reward_uav, done=self.multiprocess_action(belief, uav_action=0, uuv_action=0)
         else:
-            belief, reward_uav, done=self.singleprocess_action(entropy, uav_action, uuv_action, h_level=True)
+            belief, reward_uav, done=self.singleprocess_action(belief, uav_action, uuv_action, h_level=True)
         return belief, reward_uav, done
 
 
@@ -149,6 +158,14 @@ class AgentDispatcher():
 #        belief, self.update_map = self.uav.sensor_model.readSonarData(belief, self.update_map, sens_steps=5, simulate=False)
 #        belief, self.update_map = self.uuv.sensor_model.readSonarData(belief, self.update_map, sens_steps=5, simulate=False)
 #        return belief, self.update_map
+
+
+
+    def calc_entropy(self, b_t):
+        entropy = - (b_t * safe_log(b_t) + (1 - b_t) * safe_log(1 - b_t))
+
+        return entropy
+
 
     def init_render_sensors(self, fig):
         fig, uav = self.uav.sensor_model.init_render_sensor(fig)

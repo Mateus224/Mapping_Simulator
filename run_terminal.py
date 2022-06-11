@@ -33,7 +33,7 @@ def init(args, env, agent, config):
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
-            mem = ReplayMemory(args, args.num_replay_memory, env)
+            mem = ReplayMemory(args, args.num_replay_memory)
             priority_weight_increase = (1 - args.priority_weight) / (args.T_max - args.learn_start)
             results_dir = os.path.join('results', args.id)
             if not os.path.exists(results_dir):
@@ -48,7 +48,7 @@ def init(args, env, agent, config):
 
                     sum_reward=0
                     state, _ = env.reset()
-                if T<50000:
+                if T<500:
                     action=np.random.randint(8)
                 else:
                     action = agent.epsilon_greedy(T,500000, state)
@@ -66,7 +66,7 @@ def init(args, env, agent, config):
 
                 # Train and test
 
-                if T >= 50000:#args.learn_start:
+                if T >= 500:#args.learn_start:
                     mem.priority_weight = min(mem.priority_weight + priority_weight_increase, 1)  # Anneal importance sampling weight β to 1
 
                 #if T % args.replay_frequency == 0:

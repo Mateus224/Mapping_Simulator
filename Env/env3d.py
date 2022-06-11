@@ -107,17 +107,17 @@ class Env(object):
         self.start_entr_map = np.sum(self.entr_map)
         #print(self.loaded_env.map_2_5D[:,:,0])
 
-        return self.get_observation_() , self.map
+        return self.get_hLevel_observation() , self.map
 
 
     def renderMatrix(self, matrix, name="image"):
-        matrix=self.matrix*255   
+        matrix=matrix*255   
         matrix= matrix.astype(np.uint8)
         cv2.imshow(name,matrix)
         cv2.waitKey(1)
 
-    def calc_entropy(self, p_t):
-        entropy = - (p_t * safe_log(p_t) + (1 - p_t) * safe_log(1 - p_t))
+    def calc_entropy(self, b_t):
+        entropy = - (b_t * safe_log(b_t) + (1 - b_t) * safe_log(1 - b_t))
 
         return entropy
 
@@ -187,9 +187,8 @@ class Env(object):
             state_pose[int(self.uav_state_pos[0]), int(self.uav_state_pos[1])]=2
         state=np.concatenate([np.expand_dims(self.entr_map,axis=-1), np.expand_dims(state_pose, axis=-1)], axis=-1)
         
-        renderMatrix(state_pose)
-        renderMatrix(entr_map, name="image2")
-        cv2.waitKey(1)
+        self.renderMatrix(state_pose)
+        self.renderMatrix(self.entr_map, name="image2")
 
 
         return state
@@ -244,7 +243,7 @@ class Env(object):
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)
         else:
             self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
-            self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.belief,a,a,)
+            self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level=False)
         if self.t >= 700:#self.episode_length:
             self.done= True  
         #if agent=="DDDQN" or agent=="PPO":
