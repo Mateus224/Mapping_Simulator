@@ -119,14 +119,14 @@ class DQN_ResNet(nn.Module):
 
     filters = [128, 128, 256, 512, 1024]
     self.layer0 = nn.Sequential(
-      nn.Conv2d(2, 128, kernel_size=3, stride=1, padding=1),
+      nn.Conv2d(4, 128, kernel_size=5, stride=1, padding=1),
       #nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
       #nn.BatchNorm2d(64),
 
       nn.ReLU())
 
     self.layer1 = nn.Sequential()
-    self.layer1.add_module('conv2_1', ResBlock(filters[0], filters[1], downsample=False))
+    self.layer1.add_module('conv2_1', ResBlock(filters[0], filters[1], downsample=True))
     for i in range(1, repeat[0]):
             self.layer1.add_module('conv2_%d'%(i+1,), ResBlock(filters[1], filters[1], downsample=False))
 
@@ -150,9 +150,9 @@ class DQN_ResNet(nn.Module):
     #for i in range(1, repeat[3]):
     #    self.layer4.add_module('conv5_%d'%(i+1,),ResBlock(filters[4], filters[4], downsample=False))
 
-    self.dense = nn.Sequential(spectral_norm(nn.Linear(50176, 1024)), nn.ReLU())
-    self.fc_h_v = NoisyLinear(1024, 512, std_init=args.noisy_std)
-    self.fc_h_a = NoisyLinear(1024, 512, std_init=args.noisy_std)
+    #self.dense = nn.Sequential(spectral_norm(nn.Linear(12544, 1024)), nn.ReLU())
+    self.fc_h_v = spectral_norm(nn.Linear(12544, 512))
+    self.fc_h_a = spectral_norm(nn.Linear(12544, 512))
 
     self.fc_z_v = NoisyLinear(512, self.atoms, std_init=args.noisy_std)
     self.fc_z_a = NoisyLinear(512, action_space * self.atoms, std_init=args.noisy_std) 
@@ -165,7 +165,7 @@ class DQN_ResNet(nn.Module):
     #input = self.layer3(input)
     #input = self.layer4(input)
     input = torch.flatten(input, start_dim=1)
-    input = self.dense(input)
+    #input = self.dense(input)
 
     v_uuv = self.fc_z_v(F.relu(self.fc_h_v(input)))  # Value stream
     a_uuv = self.fc_z_a(F.relu(self.fc_h_a(input)))  # Advantage stream
@@ -194,10 +194,10 @@ class DQN(nn.Module):
     super(DQN, self).__init__()
     self.atoms = args.atoms
     self.action_space = action_space
-    self.convs = nn.Sequential(nn.Conv2d(2, 64, 5, stride=2, padding=1), nn.ReLU(),
+    self.convs = nn.Sequential(nn.Conv2d(4, 64, 5, stride=2, padding=1), nn.ReLU(),
                                  nn.Conv2d(64, 128, 3, stride=1, padding=0), nn.ReLU(),
                                  nn.Conv2d(128, 256, 2, stride=1, padding=0), nn.ReLU(), nn.Flatten())
-    self.num_features_before_fcnn = functools.reduce(operator.mul, list(self.convs(torch.rand(1, *(2,27,27))).shape))
+    self.num_features_before_fcnn = functools.reduce(operator.mul, list(self.convs(torch.rand(1, *(4,27,27))).shape))
     #self.conv_output_size = 3136
     #self.dense = nn.Sequential(nn.Linear(self.num_features_before_fcnn, 512), nn.ReLU())
     self.fc_h_v = spectral_norm(nn.Linear(self.num_features_before_fcnn, 512))

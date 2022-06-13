@@ -48,7 +48,7 @@ class Env(object):
 
 
 
-    def reset(self, episode_length=750, validation=False):
+    def reset(self, h_level=True, episode_length=750, validation=False):
         self.entr_map=self.calc_entropy(np.ones((self.xn, self.yn))/2)
         self.timeout=False
         gc.collect()# garbege collector
@@ -107,7 +107,8 @@ class Env(object):
         self.loaded_env.map_2_5D[:,:,0]=np.where(self.obstacles==1, plane, 0)
         self.start_entr_map = np.sum(self.entr_map)
         #print(self.loaded_env.map_2_5D[:,:,0])
-
+        if not h_level:
+            return self.get_observation() , self.map
         return self.get_hLevel_observation() , self.map
 
 
@@ -130,13 +131,8 @@ class Env(object):
         return 2 * self.N - 1
 
 
-    def get_observation(self):
 
-        return
-
-
-
-    def get_multiagent_observation(self):
+    def get_observation(self, single_agent=True):
         """This method is for the use of a multiagent (2 agents) DRL algorithm 
         which returns the state of the agent, which contains the posisition of 
         the angent labaled with in a matrix initialised by -2. To differentiate
@@ -155,22 +151,22 @@ class Env(object):
         ent /= -np.log(.5)
         ent = (ent - .5) * 2
 
-        self.uav_state_pos[0:3]=self.agentDispatcher.uav.pose.pose_matrix[:3,3]
-        self.uuv_state_pos[0:3]=self.agentDispatcher.uuv.pose.pose_matrix[:3,3]
-        self.position2_5D[self.last_poseX,self.last_poseY]=-2
-        self.auv_last_poseX,self.last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
-        self.uuv_last_poseX,self.last_poseY =int(self.uuv_state_pos[0]), int(self.uuv_state_pos[1])
-        if not self.done:
-            self.position2_5D[self.last_poseX,self.last_poseY]=2+2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-            self.position2_5D[self.last_poseX,self.last_poseY]=2*((self.uuv_state_pos[2]/ self.zn) - 0.5)
-            #self.position2_5D_R[x-1:x+2,y-1:y+2]=self.pose.pose_matrix[:3,:3]
-        stack=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
-        belief=np.concatenate((stack,np.expand_dims(ent, axis=-1)), axis=-1)
-        #height=np.concatenate(belief,np.expand_dims(self.position2_5D, axis=-1), axis=-1)
-        #state=np.concatenate((height,np.expand_dims(self.position2_5D_R, axis=-1)), axis=-1)
-        #state=height
+        if not single_agent:
+            self.uuv_state_pos[0:3]=self.agentDispatcher.uuv.pose.pose_matrix[:3,3]       
+            self.position2_5D[self.uuv_last_poseX,self.uuv_last_poseY]=-2        
+            self.uuv_last_poseX,self.uuv_last_poseY =int(self.uuv_state_pos[0]), int(self.uuv_state_pos[1])
+            if not self.done:
+                self.position2_5D[self.uuv_last_poseX,self.uuv_last_poseY]=2*((self.uuv_state_pos[2]/ self.zn) - 0.5)
         
-        #renderMatrix(self.belief)
+        self.uav_state_pos[0:3]=self.agentDispatcher.uav.pose.pose_matrix[:3,3]
+        self.auv_last_poseX,self.auv_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
+        if not self.done:
+            self.position2_5D[self.auv_last_poseX,self.auv_last_poseY]=2+2*((self.uav_state_pos[2]/ self.zn) - 0.5)
+
+        state=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
+        state=np.concatenate((state,np.expand_dims(ent, axis=-1)), axis=-1)
+        state=np.concatenate((state,np.expand_dims(self.position2_5D, axis=-1)), axis=-1)
+
         return state
 
 

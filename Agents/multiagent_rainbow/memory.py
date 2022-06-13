@@ -4,8 +4,8 @@ import numpy as np
 import torch
 
 map_size=27
-Transition_dtype = np.dtype([('timestep', np.int32), ('state', np.float32, (2, map_size, map_size)), ('action', np.int32), ('reward', np.float32), ('nonterminal', np.bool_)])
-blank_trans = (0, np.zeros((2, map_size, map_size), dtype=np.float32), 0, 0.0, False)
+Transition_dtype = np.dtype([('timestep', np.int32), ('state', np.float32, (4, map_size, map_size)), ('action', np.int32), ('reward', np.float32), ('nonterminal', np.bool_)])
+blank_trans = (0, np.zeros((4, map_size, map_size), dtype=np.float32), 0, 0.0, False)
 
 
 # Segment tree data structure where parent node values are sum/max of children node values
@@ -104,6 +104,7 @@ class ReplayMemory():
   # Adds state and action at time t, reward and terminal at time t + 1
   def append(self, state, action, reward, terminal):
     state= np.swapaxes(state,0,2)
+    print(state.shape)
     state=torch.Tensor(state)    
     state = state.to(device=torch.device('cpu'))  # Only store last frame and discretise to save memory
     self.transitions.append((self.t, state, action, reward, not terminal), self.transitions.max)  # Store new transition with maximum priority

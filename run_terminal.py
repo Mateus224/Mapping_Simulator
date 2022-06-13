@@ -41,14 +41,14 @@ def init(args, env, agent, config):
                 os.makedirs(results_dir)
             T, done = 0, False
             sum_reward=0
-            state, _ = env.reset()
+            state, _ = env.reset(h_level=False)
             for T in trange(1, int(args.num_steps)):
                 if done or timeout:
                     print(sum_reward,'------',(sum_reward+0.35)/env.start_entr_map)
                     sum_reward=0
 
                     sum_reward=0
-                    state, _ = env.reset()
+                    state, _ = env.reset(h_level=False)
                 if T<500:
                     action=np.random.randint(8)
                 else:
@@ -61,7 +61,7 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, timeout = env.step(action)  # Step
+                next_state, reward, done, timeout = env.step(action, h_level=False)  # Step
                 sum_reward=sum_reward+reward
                 mem.append(state, action, reward, done)  # Append transition to memory
 
