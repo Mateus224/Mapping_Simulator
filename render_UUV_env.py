@@ -49,8 +49,9 @@ def animation_callback1(step, n_frames, frame, frame_debug, uav, uuv, uav_beams,
     reward=0
 
     if(step<n_frames):
+        print(obs.shape)
         action = agent.make_action(obs)
-        obs, reward, done, entropy = env.step(action)
+        obs, reward, done, entropy = env.step(action, h_level=False)
         uav_pose=env.agentDispatcher.uav.pose.pose_matrix.copy()
         if b_multiagent:
             uuv_pose=env.agentDispatcher.uuv.pose.pose_matrix.copy()
@@ -165,7 +166,7 @@ def init_render(args, agent, env, config):
 
     global obs
     b_multiagent=config.getboolean('ENV','mutiagent')
-    obs, voxelVis = env.reset(validation=True)
+    obs, voxelVis = env.reset(h_level=False, validation=True)
     surface_water=env.loaded_env._2_D_min+5
     fig, uuv, uav, frame, frame_debug = init_env(surface_water, b_multiagent)
     fig = build_env(fig, voxelVis, surface_water)

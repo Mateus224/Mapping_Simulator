@@ -149,14 +149,12 @@ class BayesianSensor():
         P = np.empty((len(self.sensor_matrix[0])*len(self.sensor_matrix[1]), 3))
         A2C=np.eye(4)
         A2C = self.pose.pose_matrix.copy()
-        for d in range(P.shape[1]):
-            P[:, d] = np.linspace(0, 10, len(P))
-        #print(self.sensor_matrix.shape[0],self.sensor_matrix.shape[1])
         for i in range(self.sensor_matrix.shape[0]):
             for j in range(self.sensor_matrix.shape[1]):
                 A2C[:3, :3] =self.sensor_matrix[i][j][:3, :3]
                 A2C[:3, :3]=np.matmul(A2C[:3, :3],self.R_render[:3, :3])
                 beams[self.sensor_matrix.shape[1]*i+j].set_data(P, A2C.copy())
+        print(len(beams))
         return beams
 
 
@@ -188,7 +186,7 @@ class BayesianSensor():
         for _ in range(self.num_beams*self.num_rays):
             lines.append(fig.plot(P, eye, colors))
 
-        fig.view_init()
+        #fig.view_init()
 
         return fig, lines
     
