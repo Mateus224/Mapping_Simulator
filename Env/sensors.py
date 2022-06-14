@@ -72,12 +72,13 @@ class BayesianSensor():
         self.pose=pose
         self.hashmap=hashmap
         self.init_sensor()
+        
 
     
-    def readSonarData(self, belief, update_map, counter, sens_steps=3, test=False, simulate=False):
+    def readSonarData(self, belief, update_map, counter, sens_steps=3, simulate=False):
         self.h=0
         self.b=0  
-        #self.update_map.clear() 
+        self.update_map.clear() 
         doneVoxel=1
         hit= np.zeros([self.sensor_matrix.shape[0],self.sensor_matrix.shape[1]])
         for z_ in range(self.sensor_range*sens_steps):

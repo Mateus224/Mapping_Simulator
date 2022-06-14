@@ -240,8 +240,9 @@ class Env(object):
         if False:
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)
         else:
-            self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
-            self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level=False)
+            #self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
+            #self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
+            self.belief, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
         if self.t >= 700:#self.episode_length:
             self.timeout = True  
         #if agent=="DDDQN" or agent=="PPO":

@@ -117,7 +117,7 @@ class AgentDispatcher():
             
         return belief, reward, done
 
-    def singleprocess_action(self, entropy, uav_action, uuv_action, h_level=True):
+    def singleprocess_action(self, belief, uav_action, uuv_action, h_level=True):
         done=self.uav.make_action(uav_action, self.uav.pose.pose_matrix, self.uav.sensor_model.sensor_matrix)
         #entropy=self.calc_entropy(belief)
         #self.uuv.make_action(uuv_action, self.uuv.pose.pose_matrix, self.uuv.sensor_model.sensor_matrix)
@@ -134,14 +134,16 @@ class AgentDispatcher():
                 reward_uav=entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]-0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
                 entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
             else:
-                belief, update_map = self.uuv.sensor_model.readSonarData()
+                print("asd")
+                belief = self.uuv.sensor_model.readSonarData(belief, self.update_map)
+                self.update_map=self.uuv.sensor_model.
         return entropy, reward_uav, done
     
     def act(self, belief, uav_action, uuv_action=None, h_level=True, multiprocess=False):
         if multiprocess:
             belief, reward_uav, done=self.multiprocess_action(belief, uav_action=0, uuv_action=0)
         else:
-            belief, reward_uav, done=self.singleprocess_action(belief, uav_action, uuv_action, h_level=True)
+            belief, reward_uav, done=self.singleprocess_action(belief, uav_action, uuv_action, h_level)
         return belief, reward_uav, done
 
 
@@ -220,7 +222,7 @@ class Agent():
             min_z = self.real_2_D_map[self.x0][self.y0][0]
             assert min_z!=self.zn or min_z+1!=self.zn or min_z+1!=self.zn-1
 
-            self.z0= 11 #np.random.randint((min_z+1), (self.zn/2-2))
+            self.z0= 13 #np.random.randint((min_z+1), (self.zn/2-2))
             self.rotation=random_axis_angle()
         else:
             self.x0, self.y0, self.z0 = self.init_pose[0], self.init_pose[1], self.init_pose[2]
