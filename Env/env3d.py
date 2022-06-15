@@ -143,13 +143,15 @@ class Env(object):
         TODO: Put the agents into a list. 
         """
         p=self.belief
-        
         self.ent = self.calc_entropy(p)
         ent = self.ent
         
         p = (p - .5) * 2
         ent /= -np.log(.5)
         ent = (ent - .5) * 2
+
+        self.renderMatrix(p, 'img1')
+        self.renderMatrix(ent, 'img2')
 
         if not single_agent:
             self.uuv_state_pos[0:3]=self.agentDispatcher.uuv.pose.pose_matrix[:3,3]       
@@ -213,23 +215,20 @@ class Env(object):
             
             reward=0.0
             if self.done==False:
-                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
+                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))#+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
             del reward_map_entr
             del reward_map_bel
 
             return reward
 
  
-    def calc_reward(self):
-        entr_new=  self.calc_entropy(self.belief)
+    def calc_reward(self, belief):
+        entr_new=  self.calc_entropy(belief)
         if not self.done:
-            self.reward= self.deterministic_rewards(entr_new, self.belief)
+            self.reward= self.deterministic_rewards(entr_new, belief)
         self.litter= np.sum(self.reward_map_bel)            
-        if self.t >= 800:#self.episode_length:
-            self.done= True  
-            self.t = 0
-        if self.done:
-            self.litter_amount=self.litter/np.sum(self.real_2_D_map[:,:,1])
+        #if self.done:
+        #    self.litter_amount=self.litter/np.sum(self.real_2_D_map[:,:,1])
         return np.sum(entr_new)
     
     def step(self, a, h_level=True, agent=""):
@@ -242,11 +241,11 @@ class Env(object):
         else:
             #self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
             #self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
-            self.belief, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
+            belief, self.reward, self.done = self.agentDispatcher.act(self.belief,h_level,a)
         if self.t >= 700:#self.episode_length:
             self.timeout = True  
-        #if agent=="DDDQN" or agent=="PPO":
-        #    entr_new=self.calc_reward()
+        if agent=="rainbow" or agent=="PPO":
+            entr_new=self.calc_reward(belief)
         if h_level:
             return self.get_hLevel_observation(), self.reward, self.done, self.timeout#np.sum(entr_new)
         else:

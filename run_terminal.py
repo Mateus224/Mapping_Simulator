@@ -61,7 +61,7 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, timeout = env.step(action, h_level=False)  # Step
+                next_state, reward, done, timeout = env.step(action, h_level=False, agent="rainbow")  # Step
                 sum_reward=sum_reward+reward
                 mem.append(state, action, reward, done)  # Append transition to memory
 

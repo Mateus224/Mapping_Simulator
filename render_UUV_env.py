@@ -21,8 +21,10 @@ sumreward = 0
 
 hash_box_map={}
 def update_map(fig, step, belief, update_map):
-    for hashkey in update_map:
+    for i in range(len(update_map)):
+        hashkey=update_map[i]
         if hashkey!=0:
+            print(hashkey)
             box=hash_box_map.get(hashkey)
             #if step==0:
             #    box2=copy.deepcopy(box)
@@ -51,7 +53,7 @@ def animation_callback1(step, n_frames, frame, frame_debug, uav, uuv, uav_beams,
     if(step<n_frames):
         print(obs.shape)
         action = agent.make_action(obs)
-        obs, reward, done, entropy = env.step(action, h_level=False)
+        obs, reward, done, entropy = env.step(action, h_level=False, agent="rainbow")
         uav_pose=env.agentDispatcher.uav.pose.pose_matrix.copy()
         if b_multiagent:
             uuv_pose=env.agentDispatcher.uuv.pose.pose_matrix.copy()

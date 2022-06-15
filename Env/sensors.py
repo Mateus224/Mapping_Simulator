@@ -155,7 +155,7 @@ class BayesianSensor():
                 A2C[:3, :3] =self.sensor_matrix[i][j][:3, :3]
                 A2C[:3, :3]=np.matmul(A2C[:3, :3],self.R_render[:3, :3])
                 beams[self.sensor_matrix.shape[1]*i+j].set_data(P, A2C.copy())
-        print(len(beams))
+
         return beams
 
 

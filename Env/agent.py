@@ -29,8 +29,8 @@ class AgentDispatcher():
     def __init__(self, config, xn,yn,zn):
         self.b_multiagent=False
         self.uav=Agent(config, "UAV", xn, yn, zn)
-        self.uuv=Agent(config, "UUV", xn, yn, zn)
-        self.agent_list={self.uav,self.uuv}
+        #self.uuv=Agent(config, "UUV", xn, yn, zn)
+        #self.agent_list={self.uav,self.uuv}
         self.update_map ={}
         self.belief=np.zeros(xn ,yn)
         self.xn, self.yn = xn ,yn
@@ -38,7 +38,7 @@ class AgentDispatcher():
     def reset(self, loaded_env):
         
         self.uav.reset_agent(loaded_env)
-        self.uuv.reset_agent(loaded_env)
+        #self.uuv.reset_agent(loaded_env)
 
     def start_process_uav(self, action, belief, update_map, counter, uav_pose_matrix, uav_sensor_matrix):
         np_update_map=np.frombuffer(update_map.get_obj(),c.c_double)
@@ -96,7 +96,7 @@ class AgentDispatcher():
             p1.join()
             p2.join()
             end = time.time()
-            print(end - start, 'action')
+            #print(end - start, 'action')
             shared_belief = np.frombuffer(shared_belief.get_obj(),c.c_double)
             belief = shared_belief.reshape(belief.shape)
             self.update_map = np.frombuffer(update_map.get_obj(),c.c_double)
@@ -134,12 +134,12 @@ class AgentDispatcher():
                 reward_uav=entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]-0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
                 entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uav.pose.pose_matrix[0,3]),int(self.uav.pose.pose_matrix[1,3])]
             else:
-                print("asd")
-                belief = self.uuv.sensor_model.readSonarData(belief, self.update_map)
-                self.update_map=self.uuv.sensor_model.
-        return entropy, reward_uav, done
+                belief, _ = self.uav.sensor_model.readSonarData(belief, self.update_map, 0)
+                #print(self.update_map)
+                reward_uav=None
+        return belief, reward_uav, done
     
-    def act(self, belief, uav_action, uuv_action=None, h_level=True, multiprocess=False):
+    def act(self, belief, h_level,uav_action,  uuv_action=None, multiprocess=False):
         if multiprocess:
             belief, reward_uav, done=self.multiprocess_action(belief, uav_action=0, uuv_action=0)
         else:

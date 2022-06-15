@@ -104,7 +104,6 @@ class ReplayMemory():
   # Adds state and action at time t, reward and terminal at time t + 1
   def append(self, state, action, reward, terminal):
     state= np.swapaxes(state,0,2)
-    print(state.shape)
     state=torch.Tensor(state)    
     state = state.to(device=torch.device('cpu'))  # Only store last frame and discretise to save memory
     self.transitions.append((self.t, state, action, reward, not terminal), self.transitions.max)  # Store new transition with maximum priority
