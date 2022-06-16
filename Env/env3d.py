@@ -11,7 +11,7 @@ import warnings
 import traceback , gc
 import json
 import Env.agent
-
+import time
 
 
 def safe_log(x):
@@ -81,35 +81,37 @@ class Env(object):
         self.agentDispatcher.reset(self.loaded_env)
         self.position2_5D=np.zeros((self.xn, self.yn))-2
         self.position2_5D_R=np.zeros((self.xn, self.yn))
-        self.last_poseX,self.last_poseY= 0,0
+        self.uuv_last_poseX,self.uuv_last_poseY= 0,0
+        self.uav_last_poseX,self.uav_last_poseY= 0,0
         self.litter=0
         self.litter_amount=0
 
         self.entr_old = self.calc_entropy(np.ones((self.xn, self.yn))/2)
         self.t = 0
         self.litter=0
-        plane=np.random.randint(10,12)
-        self.obstacles=np.where(self.loaded_env.map_2_5D[:,:,0]>=plane, 1, 0)
-        
-        self.agentDispatcher.uav.pose.pose_matrix[2,3]=plane
-        obst=np.random.randint(15, size=6)
-        self.obstacles[obst[0],obst[1]]=1
-        self.obstacles[obst[0]+1,obst[1]]=1
-        self.obstacles[obst[0],obst[1]+1]=1
-        self.obstacles[obst[2],obst[3]]=1
-        self.obstacles[obst[2]+1,obst[3]]=1
-        self.obstacles[obst[2]+1,obst[3]+1]=1
-        self.obstacles[obst[4],:]=0
-        self.obstacles[obst[4]+1,:]=0
-        self.obstacles[:,obst[5]]=0
-        self.obstacles[:,obst[5]+1]=0
-        self.entr_map=np.where(self.obstacles==1, 0, self.entr_map)
-        self.loaded_env.map_2_5D[:,:,0]=np.where(self.obstacles==1, plane, 0)
-        self.start_entr_map = np.sum(self.entr_map)
-        #print(self.loaded_env.map_2_5D[:,:,0])
-        if not h_level:
-            return self.get_observation() , self.map
-        return self.get_hLevel_observation() , self.map
+        if h_level:
+            plane=np.random.randint(10,12)
+            self.obstacles=np.where(self.loaded_env.map_2_5D[:,:,0]>=plane, 1, 0)
+            
+            self.agentDispatcher.uav.pose.pose_matrix[2,3]=plane
+            obst=np.random.randint(15, size=6)
+            self.obstacles[obst[0],obst[1]]=1
+            self.obstacles[obst[0]+1,obst[1]]=1
+            self.obstacles[obst[0],obst[1]+1]=1
+            self.obstacles[obst[2],obst[3]]=1
+            self.obstacles[obst[2]+1,obst[3]]=1
+            self.obstacles[obst[2]+1,obst[3]+1]=1
+            self.obstacles[obst[4],:]=0
+            self.obstacles[obst[4]+1,:]=0
+            self.obstacles[:,obst[5]]=0
+            self.obstacles[:,obst[5]+1]=0
+            self.entr_map=np.where(self.obstacles==1, 0, self.entr_map)
+            
+            self.loaded_env.map_2_5D[:,:,0]=np.where(self.obstacles==1, plane, 0)
+            self.start_entr_map = np.sum(self.entr_map)
+            #print(self.loaded_env.map_2_5D[:,:,0])
+            return self.get_hLevel_observation() , self.map
+        return self.get_observation() , self.map
 
 
     def renderMatrix(self, matrix, name="image"):
@@ -145,13 +147,13 @@ class Env(object):
         p=self.belief
         self.ent = self.calc_entropy(p)
         ent = self.ent
-        
+        #self.renderMatrix(p, 'img1')
+        #self.renderMatrix(ent, 'img2')        
         p = (p - .5) * 2
         ent /= -np.log(.5)
         ent = (ent - .5) * 2
 
-        self.renderMatrix(p, 'img1')
-        self.renderMatrix(ent, 'img2')
+
 
         if not single_agent:
             self.uuv_state_pos[0:3]=self.agentDispatcher.uuv.pose.pose_matrix[:3,3]       
@@ -161,14 +163,15 @@ class Env(object):
                 self.position2_5D[self.uuv_last_poseX,self.uuv_last_poseY]=2*((self.uuv_state_pos[2]/ self.zn) - 0.5)
         
         self.uav_state_pos[0:3]=self.agentDispatcher.uav.pose.pose_matrix[:3,3]
-        self.auv_last_poseX,self.auv_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
+        self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=-2    
+        self.uav_last_poseX,self.uav_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
         if not self.done:
-            self.position2_5D[self.auv_last_poseX,self.auv_last_poseY]=2+2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-
+            self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
+        self.renderMatrix(self.belief,name='ass')
         state=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         state=np.concatenate((state,np.expand_dims(ent, axis=-1)), axis=-1)
         state=np.concatenate((state,np.expand_dims(self.position2_5D, axis=-1)), axis=-1)
-
+        self.renderMatrix(self.ent)
         return state
 
 
@@ -242,10 +245,11 @@ class Env(object):
             #self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
             #self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
             belief, self.reward, self.done = self.agentDispatcher.act(self.belief,h_level,a)
-        if self.t >= 700:#self.episode_length:
+        if self.t >= 300:#self.episode_length:
             self.timeout = True  
         if agent=="rainbow" or agent=="PPO":
             entr_new=self.calc_reward(belief)
+        self.belief=belief
         if h_level:
             return self.get_hLevel_observation(), self.reward, self.done, self.timeout#np.sum(entr_new)
         else:

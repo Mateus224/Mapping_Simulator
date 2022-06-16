@@ -222,7 +222,7 @@ class Agent():
             min_z = self.real_2_D_map[self.x0][self.y0][0]
             assert min_z!=self.zn or min_z+1!=self.zn or min_z+1!=self.zn-1
 
-            self.z0= 13 #np.random.randint((min_z+1), (self.zn/2-2))
+            self.z0= 14 #np.random.randint((min_z+1), (self.zn/2-2))
             self.rotation=random_axis_angle()
         else:
             self.x0, self.y0, self.z0 = self.init_pose[0], self.init_pose[1], self.init_pose[2]
@@ -282,7 +282,7 @@ class Agent():
         elif action_space==1:
             action_set = self.actions.ACTIONS3D
         new_position=np_pose_matrix[:3,3] + action_set[action][:3]
-        if self.legal_change_in_pose(new_position):
+        if self.legal_change_in_pose(new_position, _2D=False):
             R_t=np.matmul(np.matmul(matrix_from_axis_angle([1, 0, 0,action_set[action][3]]), \
                 matrix_from_axis_angle([0, 1, 0, action_set[action][4]])), \
                 matrix_from_axis_angle([0, 0, 1, action_set[action][5]]))
@@ -304,7 +304,7 @@ class Agent():
     
     
     def in_map(self, new_pos):
-        return new_pos[0] >= 0 and new_pos[1] >= 0 and new_pos[0] <= (self.xn-1) and new_pos[1] <= (self.yn-1) and new_pos[2] >= 0 and new_pos[2] <= (self.zn/2)+2#(self.zn/2-1)
+        return new_pos[0] >= 0 and new_pos[1] >= 0 and new_pos[0] <= (self.xn-1) and new_pos[1] <= (self.yn-1) and new_pos[2] >= 0 and new_pos[2] <= (self.zn/2)+3#(self.zn/2-1)
 
     def in_sub_map(self, new_pos,sub_map_border):
         """Checks if an agents action is still in the boarders of the underlying sub environment.
@@ -328,16 +328,17 @@ class Agent():
 
 
 
-    def collision(self,new_pos):
+    def no_collision(self,new_pos):
         x = int(np.rint(new_pos[0]))
         y = int(np.rint(new_pos[1]))
         z = int(np.rint(new_pos[2]))
         hashkey = 1000000*x+1000*y+z
         if hashkey in self.hashmap:
-            #print("COLLISION ! ! !", x,y,z)
-            return True
-        else:
+            print("COLLISION ! ! !", x,y,z)
+            print(self.real_2_D_map)
             return False
+        else:
+            return True
 
     def legal_rotation(self, new_pos):
         angleX,angleY, _ = (180/math.pi)*euler_xyz_from_matrix(new_pos)
@@ -354,4 +355,4 @@ class Agent():
         if _2D:
             return self.in_map(new_position) and not self._2Dcollision(new_position) and in_sub_map
         else:
-            return self.in_map(new_position) and self.collision(new_position) and in_sub_map
+            return self.in_map(new_position) and self.no_collision(new_position) 

@@ -32,7 +32,7 @@ class Multiagent_rainbow():
 
     #self.online_net = DQN(args, self.action_space).to(device=args.device)
     self.online_net = DQN_ResNet(args, self.action_space, ResBlock, [2,2,2,2]).to(self.device)
-    summary(self.online_net, (4, 27, 27))
+    summary(self.online_net, (4, 32, 32))
     if args.load_net:  # Load pretrained model if provided
       if os.path.isfile(args.model_path):
         checkpoint = torch.load(args.model_path)
