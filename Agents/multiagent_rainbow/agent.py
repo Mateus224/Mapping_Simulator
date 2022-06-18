@@ -63,12 +63,22 @@ class Multiagent_rainbow():
     self.online_net.reset_noise()
 
   # Acts based on single state (no batch)
-  def make_action(self, state):
+  def make_action(self, state, all_actions=False):
     state= np.swapaxes(state,0,2)
     self.eval()
     state=torch.Tensor(state).to(device=self.device)
     with torch.no_grad():
-      return (self.online_net(state.unsqueeze(0)) * self.support).sum(2).argmax(1).item()
+      if all_actions:
+        return torch.squeeze((self.online_net(state.unsqueeze(0)) * self.support).sum(2)).cpu().detach().numpy()
+      else:
+        return (self.online_net(state.unsqueeze(0)) * self.support).sum(2).argmax(1).item()
+    
+  def get_actions(self, state):
+    state= np.swapaxes(state,0,2)
+    self.eval()
+    state=torch.Tensor(state).to(device=self.device)
+    with torch.no_grad():
+      return (self.online_net(state.unsqueeze(0)) * self.support).sum(2)
 
   # Acts with an ε-greedy policy (used for evaluation only)
   def act_e_greedy(self, state, epsilon=0.001):  # High ε can reduce evaluation scores drastically
@@ -136,14 +146,18 @@ class Multiagent_rainbow():
     self.online_net.eval()
 
 
-  def epsilon_greedy(self,T, max,state):
-    if (max>T):
+  def epsilon_greedy(self,T, max,state, all_actions=False):
+    if False:#(max>T):
       prob=(max-T)/max
 
       if rng.random()<prob:
-        action=np.random.randint(8)
+        if all_actions:
+          action=torch.rand(self.action_space)
+        else:
+          action=np.random.randint(8)
       else:
-        action=self.make_action(state)
+        action=self.make_action(state, all_actions)
     else:
-      action=self.make_action(state)
+      action=self.make_action(state, all_actions)
     return action
+  

@@ -234,10 +234,13 @@ class Env(object):
         #    self.litter_amount=self.litter/np.sum(self.real_2_D_map[:,:,1])
         return np.sum(entr_new)
     
-    def step(self, a, h_level=True, agent=""):
+    def step(self, a, all_actions=False, h_level=True, agent=""):
         self.t += 1
         self.reward = 0.0
         self.done = False
+
+        if(all_actions):
+            a=self.agentDispatcher.get_legalMaxValAction(a)
         
         if False:
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)

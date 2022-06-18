@@ -147,6 +147,13 @@ class AgentDispatcher():
         return belief, reward_uav, done
 
 
+    def get_legalMaxValAction(self, actions):
+        if self.b_multiagent:
+            pass
+        else:
+            action=self.uav.sim_actions(actions)
+        return action
+
     def greedy_multiagent_chose_action(self, belief):
         action_new=self.sim_greedy(belief)
         return action_new
@@ -207,6 +214,8 @@ class Agent():
         self.last_action=0
         self.last_poseX=0
         self.last_poseY=0
+
+        self.action_space==0
         self.rad=np.deg2rad(rot_speed_degr)
         self.actions= Actions(self.rad)
 
@@ -229,6 +238,24 @@ class Agent():
             self.rotation=random_axis_angle()
         self.pose.reset(x=self.x0, y=self.y0, z=self.z0)
         self.sensor_model.reset(self.map, self.pose, self.hashmap)
+
+    def sim_actions(self,actionArr):
+        if self.action_space==0:
+            action_set = self.actions.ACTIONS2D
+        elif action_space==1:
+            action_set = self.actions.ACTIONS3D
+        not_chosen=True
+        while not_chosen:
+            action=np.argmax(actionArr)
+            new_position=self.pose.pose_matrix[:3,3] + action_set[action][:3]
+            if self.legal_change_in_pose(new_position):
+                not_chosen=False
+            else:
+                actionArr[action]=0
+        return action
+        
+                
+
 
 
     def sim_greedy(self, belief, update_map, action_space=0, sub_map_border=None):
