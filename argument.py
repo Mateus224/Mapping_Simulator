@@ -9,7 +9,7 @@ def add_arguments(parser):
     parser.add_argument('--initial_epsilon', type=float, default = 1.99, help='Initial value of epsilon in epsilon-greedy')
     parser.add_argument('--final_epsilon', type=float, default = 0.1, help='Final value of epsilon in epsilon-greedy')
     parser.add_argument('--initial_replay_size', type=int, default =100000, help='Number of steps to populate the replay memory before training starts')
-    parser.add_argument('--num_replay_memory', type=int, default = 1000, help='Number of replay memory the agent uses for training')
+    parser.add_argument('--num_replay_memory', type=int, default = 1500000, help='Number of replay memory the agent uses for training')
     parser.add_argument('--batch_size', type=int, default = 32, help='Mini batch size')
     parser.add_argument('--target_update_interval', type=int, default = 10000, help='The frequency with which the target network is updated')
     parser.add_argument('--train_interval', type=int, default = 4, help='The agent selects 4 actions between successive updates')
@@ -26,7 +26,7 @@ def add_arguments(parser):
     parser.add_argument('--dueling', type=bool, default = False, help='Set True to apply Duelinng Network')
     parser.add_argument('--optimizer',type=str, default='adam', help='Optimizer (Adam or Rmsp)')
     parser.add_argument('--noisy-std', type=float, default=0.1, metavar='σ', help='Initial standard deviation of noisy linear layers')
-    ######################     ssh -L 6006:localhost:6006 mateus@paparuda.utcluj.ro 2D_4a_presentation_450000.h5
+    ######################     ssh -L 6006:localhost:6006  zsofia@10.20.7.59
     #Make video arguments#     http://localhost:6006/#scalars
     ######################     python3.7 -m tensorboard.main --logdir tensorboard/dddqn/1
     #python3 main.py --test_dqn --test_dqn_model_path saved_dqn_networks/new_env_125000.h5 --do_render

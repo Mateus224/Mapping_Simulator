@@ -167,11 +167,11 @@ class Env(object):
         self.uav_last_poseX,self.uav_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
         if not self.done:
             self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-        self.renderMatrix(self.belief,name='ass')
+        #self.renderMatrix(self.belief,name='ass')
         state=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         state=np.concatenate((state,np.expand_dims(ent, axis=-1)), axis=-1)
         state=np.concatenate((state,np.expand_dims(self.position2_5D, axis=-1)), axis=-1)
-        self.renderMatrix(self.ent)
+        #self.renderMatrix(self.ent)
         return state
 
 
@@ -218,7 +218,7 @@ class Env(object):
             
             reward=0.0
             if self.done==False:
-                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))#+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
+                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
             del reward_map_entr
             del reward_map_bel
 
@@ -248,7 +248,7 @@ class Env(object):
             #self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
             #self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
             belief, self.reward, self.done = self.agentDispatcher.act(self.belief,h_level,a)
-        if self.t >= 300:#self.episode_length:
+        if self.t >= 400:#self.episode_length:
             self.timeout = True  
         if agent=="rainbow" or agent=="PPO":
             entr_new=self.calc_reward(belief)

@@ -11,17 +11,18 @@ from numpy.random import default_rng
 rng = default_rng(12345)
 #
 from Agents.multiagent_rainbow.model import DQN, DQN_ResNet, ResBlock
-
+from tensorboardX import SummaryWriter
 from numpy.random import default_rng
 rng = default_rng(12345)
 
 
 class Multiagent_rainbow():
   def __init__(self, args, env):
+
     self.action_space = 8#env.action_space()
     self.atoms = args.atoms
-    self.Vmin = 0#args.V_min
-    self.Vmax = 176#args.V_max
+    self.Vmin = -0.35#args.V_min
+    self.Vmax = 73#args.V_max
     self.support = torch.linspace(self.Vmin, self.Vmax, self.atoms).to(device=args.device)  # Support (range) of z
     self.delta_z = (self.Vmax - self.Vmin) / (self.atoms - 1)
     self.batch_size = 32 #args.batch_size
@@ -84,7 +85,7 @@ class Multiagent_rainbow():
   def act_e_greedy(self, state, epsilon=0.001):  # High ε can reduce evaluation scores drastically
     return np.random.randint(0, self.action_space) if np.random.random() < epsilon else self.act(state)
 
-  def learn(self, mem):
+  def learn(self, mem, T, writer):
     # Sample transitions
     self.train()
     idxs, states, actions, returns, next_states, nonterminals, weights = mem.sample(self.batch_size)
@@ -125,6 +126,11 @@ class Multiagent_rainbow():
     clip_grad_norm_(self.online_net.parameters(), self.norm_clip)  # Clip gradients by L2 norm
     self.optimiser.step()
 
+
+    writer.add_scalar("Loss", loss.mean().detach().cpu().numpy(), T)
+
+
+
     mem.update_priorities(idxs, loss.detach().cpu().numpy())  # Update priorities of sampled transitions
 
   def update_target_net(self):
@@ -147,7 +153,7 @@ class Multiagent_rainbow():
 
 
   def epsilon_greedy(self,T, max,state, all_actions=False):
-    if False:#(max>T):
+    if (max>T):
       prob=(max-T)/max
 
       if rng.random()<prob:

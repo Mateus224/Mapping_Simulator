@@ -215,7 +215,7 @@ class Agent():
         self.last_poseX=0
         self.last_poseY=0
 
-        self.action_space==0
+        self.action_space=0
         self.rad=np.deg2rad(rot_speed_degr)
         self.actions= Actions(self.rad)
 
