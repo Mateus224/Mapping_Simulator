@@ -9,6 +9,7 @@ import operator
 from torch.nn.utils import spectral_norm
 
 
+
 # Factorised NoisyLinear layer with bias
 class NoisyLinear(nn.Module):
   def __init__(self, in_features, out_features, std_init=0.3):
@@ -117,9 +118,9 @@ class DQN_ResNet(nn.Module):
     self.atoms = args.atoms
     self.action_space = action_space
 
-    filters = [128, 128, 256, 512, 1024]
+    filters = [64, 64, 128, 128, 1024]
     self.layer0 = nn.Sequential(
-      nn.Conv2d(4, 128, kernel_size=5, stride=1, padding=1),
+      nn.Conv2d(4, 64, kernel_size=3, stride=1, padding=1),
       #nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
       #nn.BatchNorm2d(64),
 
@@ -151,8 +152,8 @@ class DQN_ResNet(nn.Module):
     #    self.layer4.add_module('conv5_%d'%(i+1,),ResBlock(filters[4], filters[4], downsample=False))
 
     #self.dense = nn.Sequential(spectral_norm(nn.Linear(12544, 1024)), nn.ReLU())
-    self.fc_h_v = spectral_norm(nn.Linear(16384, 512))
-    self.fc_h_a = spectral_norm(nn.Linear(16384, 512))
+    self.fc_h_v = spectral_norm(nn.Linear(8192, 512))
+    self.fc_h_a = spectral_norm(nn.Linear(8192, 512))
 
     self.fc_z_v = NoisyLinear(512, self.atoms, std_init=args.noisy_std)
     self.fc_z_a = NoisyLinear(512, action_space * self.atoms, std_init=args.noisy_std) 

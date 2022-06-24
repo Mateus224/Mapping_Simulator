@@ -16,6 +16,7 @@ from plotly.graph_objs import Scatter
 from plotly.graph_objs.scatter import Line
 import numpy as np
 from tqdm import trange
+from tensorboardX import SummaryWriter
 
 def init(args, env, agent, config):
 
@@ -30,10 +31,14 @@ def init(args, env, agent, config):
     metrics = {'steps': s, 'litter': l, 'entropy': e}#, 'litter_amount':res}
     t=np.arange(800)
     run_noCrash=False
+    episode=0
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
+            string="./tensorboard/rainbow/paper_smallNN"
+            writer = SummaryWriter(string)
             timeout=False
+            all_actions=False
             mem = ReplayMemory(args, args.num_replay_memory)
             priority_weight_increase = (1 - args.priority_weight) / (args.T_max - args.learn_start)
             results_dir = os.path.join('results', args.id)
@@ -44,12 +49,25 @@ def init(args, env, agent, config):
             state, _ = env.reset(h_level=False)
             for T in trange(1, int(args.num_steps)):
                 if done or timeout:
+<<<<<<< HEAD
                     print(sum_reward,'  ------  Litter:', np.sum(env.reward_map_bel))#,(sum_reward+(0.35*done))/(env.start_entr_map))
                     #print(np.nanmax(env.loaded_env.map_2_5D),'max height')
                     sum_reward=0
                     state, _ = env.reset(h_level=False)
 
                 action = agent.epsilon_greedy(T,8000000, state)
+=======
+                    litter=env.litter
+                    print(sum_reward,'------', litter)#,(sum_reward+(0.35*done))/(env.start_entr_map))
+                    #print(np.nanmax(env.loaded_env.map_2_5D),'max height')
+                    sum_reward=0
+                    state, _ = env.reset(h_level=False)
+                    episode+=1
+                    writer.add_scalar("Litter", litter, episode)
+
+                #action = agent.epsilon_greedy(T,2, state)
+                action = agent.epsilon_greedy(T,5000000, state, all_actions)
+>>>>>>> abd2c4f7a2ea11d3c87bdd5e83569276e9408455
                 #if T % args.replay_frequency == 0:
 
                 agent.reset_noise()  # Draw a new set of noisy weights
@@ -58,7 +76,7 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, timeout = env.step(action, h_level=False, agent="rainbow")  # Step
+                next_state, reward, done, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
                 sum_reward=sum_reward+reward
                 mem.append(state, action, reward, done)  # Append transition to memory
 
@@ -68,7 +86,7 @@ def init(args, env, agent, config):
                     mem.priority_weight = min(mem.priority_weight + priority_weight_increase, 1)  # Anneal importance sampling weight β to 1
 
                 #if T % args.replay_frequency == 0:
-                    agent.learn(mem)  # Train with n-step distributional double-Q learning
+                    agent.learn(mem,T,writer)  # Train with n-step distributional double-Q learning
 
                     #if T % args.evaluation_interval == 0:
                     #    agent.eval()  # Set DQN (online network) to evaluation mode

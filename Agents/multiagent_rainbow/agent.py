@@ -11,17 +11,22 @@ from numpy.random import default_rng
 rng = default_rng(12345)
 #
 from Agents.multiagent_rainbow.model import DQN, DQN_ResNet, ResBlock
-
+from tensorboardX import SummaryWriter
 from numpy.random import default_rng
 rng = default_rng(12345)
 
 
 class Multiagent_rainbow():
   def __init__(self, args, env):
+
     self.action_space = 8#env.action_space()
     self.atoms = args.atoms
     self.Vmin = -0.35#args.V_min
+<<<<<<< HEAD
     self.Vmax = 769#args.V_max
+=======
+    self.Vmax = 73#args.V_max
+>>>>>>> abd2c4f7a2ea11d3c87bdd5e83569276e9408455
     self.support = torch.linspace(self.Vmin, self.Vmax, self.atoms).to(device=args.device)  # Support (range) of z
     self.delta_z = (self.Vmax - self.Vmin) / (self.atoms - 1)
     self.batch_size = 32 #args.batch_size
@@ -63,18 +68,28 @@ class Multiagent_rainbow():
     self.online_net.reset_noise()
 
   # Acts based on single state (no batch)
-  def make_action(self, state):
+  def make_action(self, state, all_actions=False):
     state= np.swapaxes(state,0,2)
     self.eval()
     state=torch.Tensor(state).to(device=self.device)
     with torch.no_grad():
-      return (self.online_net(state.unsqueeze(0)) * self.support).sum(2).argmax(1).item()
+      if all_actions:
+        return torch.squeeze((self.online_net(state.unsqueeze(0)) * self.support).sum(2)).cpu().detach().numpy()
+      else:
+        return (self.online_net(state.unsqueeze(0)) * self.support).sum(2).argmax(1).item()
+    
+  def get_actions(self, state):
+    state= np.swapaxes(state,0,2)
+    self.eval()
+    state=torch.Tensor(state).to(device=self.device)
+    with torch.no_grad():
+      return (self.online_net(state.unsqueeze(0)) * self.support).sum(2)
 
   # Acts with an ε-greedy policy (used for evaluation only)
   def act_e_greedy(self, state, epsilon=0.001):  # High ε can reduce evaluation scores drastically
     return np.random.randint(0, self.action_space) if np.random.random() < epsilon else self.act(state)
 
-  def learn(self, mem):
+  def learn(self, mem, T, writer):
     # Sample transitions
     self.train()
     idxs, states, actions, returns, next_states, nonterminals, weights = mem.sample(self.batch_size)
@@ -115,6 +130,11 @@ class Multiagent_rainbow():
     clip_grad_norm_(self.online_net.parameters(), self.norm_clip)  # Clip gradients by L2 norm
     self.optimiser.step()
 
+
+    writer.add_scalar("Loss", loss.mean().detach().cpu().numpy(), T)
+
+
+
     mem.update_priorities(idxs, loss.detach().cpu().numpy())  # Update priorities of sampled transitions
 
   def update_target_net(self):
@@ -136,14 +156,18 @@ class Multiagent_rainbow():
     self.online_net.eval()
 
 
-  def epsilon_greedy(self,T, max,state):
+  def epsilon_greedy(self,T, max,state, all_actions=False):
     if (max>T):
       prob=(max-T)/(max)
 
       if rng.random()<prob:
-        action=np.random.randint(8)
+        if all_actions:
+          action=torch.rand(self.action_space)
+        else:
+          action=np.random.randint(8)
       else:
-        action=self.make_action(state)
+        action=self.make_action(state, all_actions)
     else:
-      action=self.make_action(state)
+      action=self.make_action(state, all_actions)
     return action
+  

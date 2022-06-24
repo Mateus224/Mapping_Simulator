@@ -167,11 +167,11 @@ class Env(object):
         self.uav_last_poseX,self.uav_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
         if not self.done:
             self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-        self.renderMatrix(self.belief,name='ass')
+        #self.renderMatrix(self.belief,name='ass')
         state=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         state=np.concatenate((state,np.expand_dims(ent, axis=-1)), axis=-1)
         state=np.concatenate((state,np.expand_dims(self.position2_5D, axis=-1)), axis=-1)
-        self.renderMatrix(self.ent)
+        #self.renderMatrix(self.ent)
         return state
 
 
@@ -218,7 +218,11 @@ class Env(object):
             
             reward=0.0
             if self.done==False:
+<<<<<<< HEAD
                 reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/10)
+=======
+                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
+>>>>>>> abd2c4f7a2ea11d3c87bdd5e83569276e9408455
             del reward_map_entr
             del reward_map_bel
 
@@ -234,10 +238,13 @@ class Env(object):
         #    self.litter_amount=self.litter/np.sum(self.real_2_D_map[:,:,1])
         return np.sum(entr_new)
     
-    def step(self, a, h_level=True, agent=""):
+    def step(self, a, all_actions=False, h_level=True, agent=""):
         self.t += 1
         self.reward = 0.0
         self.done = False
+
+        if(all_actions):
+            a=self.agentDispatcher.get_legalMaxValAction(a)
         
         if False:
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)
