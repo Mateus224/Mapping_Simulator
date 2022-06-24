@@ -44,6 +44,7 @@ class Env(object):
         self.start_entr_map=167
         self.uav_state_pos=np.zeros(7)
         self.uuv_state_pos=np.zeros(7)
+        self.last_a=0
         
 
 
@@ -51,6 +52,7 @@ class Env(object):
     def reset(self, h_level=True, episode_length=750, validation=False):
         self.entr_map=self.calc_entropy(np.ones((self.xn, self.yn))/2)
         self.timeout=False
+        self.fifo=[]
         gc.collect()# garbege collector
         self.done=False
         self.episode_length=episode_length
@@ -147,8 +149,11 @@ class Env(object):
         p=self.belief
         self.ent = self.calc_entropy(p)
         ent = self.ent
+
         #self.renderMatrix(p, 'img1')
         #self.renderMatrix(ent, 'img2')        
+
+
         p = (p - .5) * 2
         ent /= -np.log(.5)
         ent = (ent - .5) * 2
@@ -167,11 +172,15 @@ class Env(object):
         self.uav_last_poseX,self.uav_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
         if not self.done:
             self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-        self.renderMatrix(self.belief,name='ass')
+
+        #self.renderMatrix(self.position2_5D, 'pos')
+        #self.renderMatrix(self.loaded_env.map_2_5D[:,:,0]/self.zn, 'h')
+        #self.renderMatrix(self.belief,name='ass')
         state=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         state=np.concatenate((state,np.expand_dims(ent, axis=-1)), axis=-1)
         state=np.concatenate((state,np.expand_dims(self.position2_5D, axis=-1)), axis=-1)
-        self.renderMatrix(self.ent)
+        #self.renderMatrix(self.ent)
+
         return state
 
 
@@ -218,7 +227,8 @@ class Env(object):
             
             reward=0.0
             if self.done==False:
-                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))#+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
+                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/10)
+
             del reward_map_entr
             del reward_map_bel
 
@@ -234,10 +244,56 @@ class Env(object):
         #    self.litter_amount=self.litter/np.sum(self.real_2_D_map[:,:,1])
         return np.sum(entr_new)
     
-    def step(self, a, h_level=True, agent=""):
+    
+    def got_stucked(self, a):
+        crr_p=np.copy(self.uav_state_pos[0:2]) #current 2D position
+        counter=0
+        if len(self.fifo)>22:
+            self.fifo.pop(-1)
+        
+        for idx, a_p in enumerate(self.fifo):
+            if np.array_equal(a_p,crr_p):
+                counter+=1
+            
+            #if 1==idx%2:
+            #    if np.array_equal(a_p,crr_p):
+            #        counterMod2+=1
+            #if 0==idx%2:
+            #    if np.array_equal(a_p,crr_p):
+            #        counterMod2_+=1
+            #if 1==idx%3:
+            #    if np.array_equal(a_p,crr_p):
+            #        counterMod3+=1
+            #if 0==idx%3:
+            #    if np.array_equal(a_p,crr_p):
+            #        counterMod3_+=1
+        
+        if counter>4:# or counterMod2_ >4 or counterMod3>4 or counterMod3_>4:
+            #print("stucked")
+            a_n=np.random.random_integers(7)
+            #a_n=self.last_a
+            done=False
+            while not done:
+                if self.agentDispatcher.sim_legal_action(a_n) :
+                    a=a_n
+                    done=True
+                else:
+                    a_n=np.random.random_integers(7)
+        #else:
+            #self.last_a=a
+        self.fifo.insert(0,crr_p)
+        return a  
+
+    
+    def step(self, a, all_actions=False, h_level=True, agent=""):
         self.t += 1
         self.reward = 0.0
         self.done = False
+
+        a=self.got_stucked(a)
+
+        if(all_actions):
+            a=self.agentDispatcher.get_legalMaxValAction(a)
         
         if False:
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)
@@ -251,9 +307,9 @@ class Env(object):
             entr_new=self.calc_reward(belief)
         self.belief=belief
         if h_level:
-            return self.get_hLevel_observation(), self.reward, self.done, self.timeout#np.sum(entr_new)
+            return self.get_hLevel_observation(), self.reward, a, self.done, self.timeout#np.sum(entr_new)
         else:
-            return self.get_observation(), self.reward, self.done, self.timeout
+            return self.get_observation(), self.reward, self.done, a, self.timeout
 
     # Uses loss of life as terminal signal
     def train(self):

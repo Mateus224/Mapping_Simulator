@@ -16,6 +16,7 @@ from plotly.graph_objs import Scatter
 from plotly.graph_objs.scatter import Line
 import numpy as np
 from tqdm import trange
+from tensorboardX import SummaryWriter
 
 def init(args, env, agent, config):
 
@@ -30,9 +31,13 @@ def init(args, env, agent, config):
     metrics = {'steps': s, 'litter': l, 'entropy': e}#, 'litter_amount':res}
     t=np.arange(800)
     run_noCrash=False
+    episode=0
+    all_actions=False
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
+            string="./tensorboard/rainbow/paper_smallNN"
+            writer = SummaryWriter(string)
             timeout=False
             mem = ReplayMemory(args, args.num_replay_memory)
             priority_weight_increase = (1 - args.priority_weight) / (args.T_max - args.learn_start)
@@ -44,12 +49,25 @@ def init(args, env, agent, config):
             state, _ = env.reset(h_level=False)
             for T in trange(1, int(args.num_steps)):
                 if done or timeout:
-                    print(sum_reward,'------')#,(sum_reward+(0.35*done))/(env.start_entr_map))
+
+                    print(sum_reward,'  ------  Litter:', np.sum(env.reward_map_bel))#,(sum_reward+(0.35*done))/(env.start_entr_map))
                     #print(np.nanmax(env.loaded_env.map_2_5D),'max height')
                     sum_reward=0
                     state, _ = env.reset(h_level=False)
 
-                action = agent.epsilon_greedy(T,8000000, state)
+
+                    litter=env.litter
+                    print(sum_reward,'------', litter)#,(sum_reward+(0.35*done))/(env.start_entr_map))
+                    #print(np.nanmax(env.loaded_env.map_2_5D),'max height')
+                    sum_reward=0
+                    state, _ = env.reset(h_level=False)
+                    episode+=1
+                    writer.add_scalar("Litter", litter, episode)
+
+                #action = agent.epsilon_greedy(T,2, state)
+
+                action = agent.epsilon_greedy(T,10000, state, all_actions)
+
                 #if T % args.replay_frequency == 0:
 
                 agent.reset_noise()  # Draw a new set of noisy weights
@@ -58,17 +76,17 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, timeout = env.step(action, h_level=False, agent="rainbow")  # Step
+                next_state, reward, done, action, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
                 sum_reward=sum_reward+reward
                 mem.append(state, action, reward, done)  # Append transition to memory
 
                 # Train and test
 
-                if T >= 100000:#args.learn_start:
+                if T >= 200000:#args.learn_start:
                     mem.priority_weight = min(mem.priority_weight + priority_weight_increase, 1)  # Anneal importance sampling weight β to 1
 
                 #if T % args.replay_frequency == 0:
-                    agent.learn(mem)  # Train with n-step distributional double-Q learning
+                    agent.learn(mem,T,writer)  # Train with n-step distributional double-Q learning
 
                     #if T % args.evaluation_interval == 0:
                     #    agent.eval()  # Set DQN (online network) to evaluation mode
@@ -88,14 +106,14 @@ def init(args, env, agent, config):
                     if (args.checkpoint_interval != 0) and (T % args.checkpoint_interval == 0):
                         agent.save(results_dir, 'checkpoint.pth')
 
-                    state = next_state
+                state = next_state
     else :   
         experiments=0
         simulate=False
         for i in range(List1_row):
             j=0
             done=False
-            obs, _ = env.reset(validation=True)
+            state, _ = env.reset(h_level=False, validation=True)
             if type(agent)!=DDDQN_agent:
                 simulate=True
             else:
@@ -107,17 +125,20 @@ def init(args, env, agent, config):
             while not done:
                 j=j+1
                 
-                action = agent.make_action(obs)
+                action = agent.make_action(state, all_actions)
                 
-                obs, reward, done, entropy = env.step(action, lm=False, agent="DDDQN")
+                state, reward, done, entropy = env.step(action,all_actions, h_level=False, agent="rainbow")
                 #if(j%1000==0):
                 t1 = time.time()
-                print(t1-t0, 'tot')
+                #print(t1-t0, 'tot')
 
-                if j<=241:# and False== done:
+                if j<=342:# and False== done:
                     metrics['steps'][i].append(env.t)
-                    metrics['entropy'][i].append(entropy)
+                    #print(env.t)
+                    #metrics['entropy'][i].append(entropy)
                     metrics['litter'][i].append(env.litter)
+                    if done:
+                        print("Error")
 
                 #    belief=env.belief
                 #    reward+= reward
@@ -129,11 +150,11 @@ def init(args, env, agent, config):
                     done=True
             #experiments= experiments+1
         #print(metrics['entropy'])
-        _plot_line(t, metrics['entropy'], 'Entropy')
+        #_plot_line(t, metrics['entropy'], 'Entropy')
         _plot_line(t, metrics['litter'], 'Litter')
                     
 
-def _plot_line(xs, ys_population, title, path='/home/mateus/'):
+def _plot_line2(xs, ys_population, title, path='/home/mateus/'):
     max_colour, mean_colour, std_colour, transparent = 'rgb(0, 132, 180)', 'rgb(0, 172, 237)', 'rgba(29, 202, 255, 0.2)', 'rgba(0, 0, 0, 0)'
     max_step=np.zeros(len(ys_population[0]))
     min_step=np.zeros(len(ys_population[0]))
@@ -159,4 +180,27 @@ def _plot_line(xs, ys_population, title, path='/home/mateus/'):
     plotly.offline.plot({
         'data': [trace_max,trace_upper, trace_mean, trace_lower, trace_min],
         'layout': dict(font_size=50,title=title, xaxis={'title': 'Step'}, yaxis={'title': title}),
+    }, filename=os.path.join(path, title + '.html'), auto_open=False)
+
+
+def _plot_line(xs, ys_population, title, path='/home/mateus/'):
+    max_colour, mean_colour, std_colour, transparent = 'rgb(0, 132, 180)', 'rgb(0, 172, 237)', 'rgba(29, 202, 255, 0.2)', 'rgba(0, 0, 0, 0)'
+
+    ys = torch.tensor(ys_population, dtype=torch.float32)
+
+    ys_ = ys[0].squeeze()
+
+    ys_min, ys_max, ys_mean, ys_std = np.amax(ys_population, axis=0), np.amin(ys_population, axis=0), ys.mean(0).squeeze(), ys.std(0).squeeze()
+    ys_upper, ys_lower = ys_mean + ys_std, ys_mean - ys_std
+
+
+    trace_max = Scatter(x=xs, y=ys_max, fillcolor=std_colour,  line=Line(color=max_colour, dash='dash'), name='Max')
+    trace_upper = Scatter(x=xs, y=ys_upper.numpy(), fillcolor=std_colour, line=Line(color=transparent), name='+1 Std. Dev.', showlegend=False) #line=Line(color=transparent), name='+1 Std. Dev.', showlegend=False)
+    trace_mean = Scatter(x=xs, y=ys_mean,  fill='tonexty',  fillcolor=std_colour, line=Line(color=mean_colour), name='Mean')
+    trace_lower = Scatter(x=xs, y=ys_lower.numpy(),fill='tonexty',  fillcolor=std_colour, line=Line(color=transparent), name='-1 Std. Dev.', showlegend=False)
+    trace_min = Scatter(x=xs, y=ys_min, line=Line(color=max_colour, dash='dash'), name='Min')
+
+    plotly.offline.plot({
+        'data': [trace_max,trace_upper, trace_mean, trace_lower, trace_min],
+        'layout': dict(font_size=40,title=title, xaxis={'title': 'Step'}, yaxis={'title': title}),
     }, filename=os.path.join(path, title + '.html'), auto_open=False)

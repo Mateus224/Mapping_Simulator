@@ -9,6 +9,7 @@ import operator
 from torch.nn.utils import spectral_norm
 
 
+
 # Factorised NoisyLinear layer with bias
 class NoisyLinear(nn.Module):
   def __init__(self, in_features, out_features, std_init=0.3):
@@ -117,7 +118,7 @@ class DQN_ResNet(nn.Module):
     self.atoms = args.atoms
     self.action_space = action_space
 
-    filters = [128, 128, 256, 512, 1024]
+    filters = [128, 128, 256, 256, 1024]
     self.layer0 = nn.Sequential(
       nn.Conv2d(4, 128, kernel_size=5, stride=1, padding=1),
       #nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
