@@ -44,14 +44,12 @@ def init(args, env, agent, config):
             state, _ = env.reset(h_level=False)
             for T in trange(1, int(args.num_steps)):
                 if done or timeout:
-                    print(sum_reward,'------')#,(sum_reward+(0.35*done))/(env.start_entr_map))
+                    print(sum_reward,'  ------  Litter:', np.sum(env.reward_map_bel))#,(sum_reward+(0.35*done))/(env.start_entr_map))
                     #print(np.nanmax(env.loaded_env.map_2_5D),'max height')
                     sum_reward=0
                     state, _ = env.reset(h_level=False)
-                if T<100000:
-                    action=np.random.randint(8)
-                else:
-                    action = agent.epsilon_greedy(T,12000000, state)
+
+                action = agent.epsilon_greedy(T,8000000, state)
                 #if T % args.replay_frequency == 0:
 
                 agent.reset_noise()  # Draw a new set of noisy weights

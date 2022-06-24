@@ -52,7 +52,7 @@ def parse():
     parser.add_argument('--learn-start', type=int, default=int(20e3), metavar='STEPS', help='Number of steps before starting training')
     parser.add_argument('--evaluation-interval', type=int, default=12000, metavar='STEPS', help='Number of training steps between evaluations')
     parser.add_argument('--target-update', type=int, default=int(8e3), metavar='τ', help='Number of steps after which to update target network')
-    parser.add_argument('--id', type=str, default='3Dexperiment', help='Experiment ID')
+    parser.add_argument('--id', type=str, default='3Dexperiment_extendedReward', help='Experiment ID')
     parser.add_argument('--checkpoint-interval', default=11000, help='How often to checkpoint the model, defaults to 0 (never checkpoint)')
 
     

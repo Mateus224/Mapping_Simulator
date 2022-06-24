@@ -218,7 +218,7 @@ class Env(object):
             
             reward=0.0
             if self.done==False:
-                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))#+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
+                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/10)
             del reward_map_entr
             del reward_map_bel
 
@@ -245,7 +245,7 @@ class Env(object):
             #self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
             #self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
             belief, self.reward, self.done = self.agentDispatcher.act(self.belief,h_level,a)
-        if self.t >= 300:#self.episode_length:
+        if self.t >= 400:#self.episode_length:
             self.timeout = True  
         if agent=="rainbow" or agent=="PPO":
             entr_new=self.calc_reward(belief)
