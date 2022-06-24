@@ -36,7 +36,7 @@ class Multiagent_rainbow():
     summary(self.online_net, (4, 32, 32))
     if args.load_net:  # Load pretrained model if provided
       if os.path.isfile(args.model_path):
-        checkpoint = torch.load(args.model_path)
+        checkpoint = torch.load(args.model_path, map_location=torch.device(self.device))
         self.online_net.load_state_dict(checkpoint, strict=True)  
         #state_dict = torch.load(args.model_path, map_location='cpu')  # Always load tensors onto CPU by default, will shift to GPU if necessary
         #if 'conv1.weight' in state_dict.keys():
