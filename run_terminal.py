@@ -44,15 +44,12 @@ def init(args, env, agent, config):
             state, _ = env.reset(h_level=False)
             for T in trange(1, int(args.num_steps)):
                 if done or timeout:
-                    print(sum_reward,'------',(sum_reward+0.35)/env.start_entr_map)
-                    sum_reward=0
-
+                    print(sum_reward,'------')#,(sum_reward+(0.35*done))/(env.start_entr_map))
+                    #print(np.nanmax(env.loaded_env.map_2_5D),'max height')
                     sum_reward=0
                     state, _ = env.reset(h_level=False)
-                if T<500:
-                    action=np.random.randint(8)
-                else:
-                    action = agent.epsilon_greedy(T,50000, state)
+
+                action = agent.epsilon_greedy(T,8000000, state)
                 #if T % args.replay_frequency == 0:
 
                 agent.reset_noise()  # Draw a new set of noisy weights
@@ -67,7 +64,7 @@ def init(args, env, agent, config):
 
                 # Train and test
 
-                if T >= 500:#args.learn_start:
+                if T >= 100000:#args.learn_start:
                     mem.priority_weight = min(mem.priority_weight + priority_weight_increase, 1)  # Anneal importance sampling weight β to 1
 
                 #if T % args.replay_frequency == 0:

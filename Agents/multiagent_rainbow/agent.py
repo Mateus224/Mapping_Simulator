@@ -20,8 +20,8 @@ class Multiagent_rainbow():
   def __init__(self, args, env):
     self.action_space = 8#env.action_space()
     self.atoms = args.atoms
-    self.Vmin = 0#args.V_min
-    self.Vmax = 176#args.V_max
+    self.Vmin = -0.35#args.V_min
+    self.Vmax = 63#args.V_max
     self.support = torch.linspace(self.Vmin, self.Vmax, self.atoms).to(device=args.device)  # Support (range) of z
     self.delta_z = (self.Vmax - self.Vmin) / (self.atoms - 1)
     self.batch_size = 32 #args.batch_size
@@ -32,7 +32,7 @@ class Multiagent_rainbow():
 
     #self.online_net = DQN(args, self.action_space).to(device=args.device)
     self.online_net = DQN_ResNet(args, self.action_space, ResBlock, [2,2,2,2]).to(self.device)
-    summary(self.online_net, (4, 27, 27))
+    summary(self.online_net, (4, 32, 32))
     if args.load_net:  # Load pretrained model if provided
       if os.path.isfile(args.model_path):
         checkpoint = torch.load(args.model_path)
@@ -138,8 +138,7 @@ class Multiagent_rainbow():
 
   def epsilon_greedy(self,T, max,state):
     if (max>T):
-      prob=(max-T)/max
-
+      prob=(max-(T))/(max)
       if rng.random()<prob:
         action=np.random.randint(8)
       else:
