@@ -20,7 +20,7 @@ def add_arguments(parser):
     parser.add_argument('--no_op_steps', type=int, default = 10, help='Maximum number of "do nothing" actions to be performed by the agent at the start of an episode')
     parser.add_argument('--save_network_path', type=str, default = "saved_dqn_networks/", help='')
     parser.add_argument('--save_summary_path', type=str, default = "dqn_summary/", help='')
-    parser.add_argument('--model_path', type=str, default = "results/3Dexperiment_extendedReward/checkpoint.pth", help='model used during testing / visulization') #testmoreFilters.h5
+    parser.add_argument('--model_path', type=str, default = "results/3Dexperiment_extendedReward_good_results/3Dexperiment_extendedReward_good_results/checkpoint.pth", help='model used during testing / visulization') #testmoreFilters.h5
 
     parser.add_argument('--exp_name', type=str, default = "", help='')
     parser.add_argument('--gpu_frac', type=float, default = 1.0, help='Set GPU use limit for tensorflow')

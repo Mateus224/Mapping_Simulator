@@ -169,8 +169,8 @@ class Env(object):
         self.uav_last_poseX,self.uav_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
         if not self.done:
             self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-        self.renderMatrix(self.position2_5D, 'pos')
-        self.renderMatrix(self.loaded_env.map_2_5D[:,:,0]/self.zn, 'h')
+        #self.renderMatrix(self.position2_5D, 'pos')
+        #self.renderMatrix(self.loaded_env.map_2_5D[:,:,0]/self.zn, 'h')
         #self.renderMatrix(self.belief,name='ass')
         state=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         state=np.concatenate((state,np.expand_dims(ent, axis=-1)), axis=-1)
@@ -242,18 +242,13 @@ class Env(object):
     
     def got_stucked(self, a):
         crr_p=np.copy(self.uav_state_pos[0:2]) #current 2D position
-        
+        counter=0
         if len(self.fifo)>22:
             self.fifo.pop(-1)
-        counterMod2=0
-        counterMod3=0
-        counterMod2_=0
-        counterMod3_=0
-        counterMod4_=0
-        counterMod4=0
+        
         for idx, a_p in enumerate(self.fifo):
             if np.array_equal(a_p,crr_p):
-                counterMod2+=1
+                counter+=1
             
             #if 1==idx%2:
             #    if np.array_equal(a_p,crr_p):
@@ -268,8 +263,8 @@ class Env(object):
             #    if np.array_equal(a_p,crr_p):
             #        counterMod3_+=1
         
-        if counterMod2>4:# or counterMod2_ >4 or counterMod3>4 or counterMod3_>4:
-            print("stucked")
+        if counter>4:# or counterMod2_ >4 or counterMod3>4 or counterMod3_>4:
+            #print("stucked")
             a_n=np.random.random_integers(7)
             #a_n=self.last_a
             done=False
@@ -279,7 +274,6 @@ class Env(object):
                     done=True
                 else:
                     a_n=np.random.random_integers(7)
-                    print(a_n)
         #else:
             #self.last_a=a
         self.fifo.insert(0,crr_p)
@@ -308,9 +302,9 @@ class Env(object):
             entr_new=self.calc_reward(belief)
         self.belief=belief
         if h_level:
-            return self.get_hLevel_observation(), self.reward, self.done, self.timeout#np.sum(entr_new)
+            return self.get_hLevel_observation(), self.reward, a, self.done, self.timeout#np.sum(entr_new)
         else:
-            return self.get_observation(), self.reward, self.done, self.timeout
+            return self.get_observation(), self.reward, self.done, a, self.timeout
 
     # Uses loss of life as terminal signal
     def train(self):
