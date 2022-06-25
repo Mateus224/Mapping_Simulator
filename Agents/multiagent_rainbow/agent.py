@@ -22,7 +22,7 @@ class Multiagent_rainbow():
     self.action_space = 8#env.action_space()
     self.atoms = args.atoms
     self.Vmin = -0.35#args.V_min
-    self.Vmax = 63#args.V_max
+    self.Vmax = 72#args.V_max
 
     self.support = torch.linspace(self.Vmin, self.Vmax, self.atoms).to(device=args.device)  # Support (range) of z
     self.delta_z = (self.Vmax - self.Vmin) / (self.atoms - 1)

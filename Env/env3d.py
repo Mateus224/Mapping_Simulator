@@ -227,7 +227,7 @@ class Env(object):
             
             reward=0.0
             if self.done==False:
-                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/10)
+                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
 
             del reward_map_entr
             del reward_map_bel

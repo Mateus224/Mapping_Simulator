@@ -66,7 +66,7 @@ def init(args, env, agent, config):
 
                 #action = agent.epsilon_greedy(T,2, state)
 
-                action = agent.epsilon_greedy(T,10000, state, all_actions)
+                action = agent.epsilon_greedy(T,5000000, state, all_actions)
 
                 #if T % args.replay_frequency == 0:
 
@@ -82,7 +82,7 @@ def init(args, env, agent, config):
 
                 # Train and test
 
-                if T >= 200000:#args.learn_start:
+                if T >= 100000:#args.learn_start:
                     mem.priority_weight = min(mem.priority_weight + priority_weight_increase, 1)  # Anneal importance sampling weight β to 1
 
                 #if T % args.replay_frequency == 0:
