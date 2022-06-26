@@ -107,7 +107,8 @@ def init(args, env, agent, config):
                         agent.save(results_dir, 'checkpoint.pth')
 
                 state = next_state
-    else :   
+    else :  
+        f_p=0 
         experiments=0
         simulate=False
         for i in range(List1_row):
@@ -122,18 +123,20 @@ def init(args, env, agent, config):
             
             #speed test
             t0 = time.time()
+           
             while not done:
                 j=j+1
                 
                 action = agent.make_action(state, all_actions)
                 
-                state, reward, done, entropy = env.step(action,all_actions, h_level=False, agent="rainbow")
+                state, reward, done,a, timeout = env.step(action,all_actions, h_level=False, agent="rainbow")
                 #if(j%1000==0):
                 t1 = time.time()
                 #print(t1-t0, 'tot')
 
-                if j<=342:# and False== done:
+                if j<=350:# and False== done:
                     metrics['steps'][i].append(env.t)
+
                     #print(env.t)
                     #metrics['entropy'][i].append(entropy)
                     metrics['litter'][i].append(env.litter)
@@ -143,7 +146,10 @@ def init(args, env, agent, config):
                 #    belief=env.belief
                 #    reward+= reward
                 else:
-                    print(i)
+                    false_positive=np.where(env.reward_map_bel-env.loaded_env.map_2_5D[:,:,1]>0,1,0)
+                    
+                    f_p=np.sum(false_positive)+f_p
+                    print(f_p)
                     print(env.litter)
                     #metrics['litter'][i].append(env.litter)
                     #metrics['steps'][i].append(j)

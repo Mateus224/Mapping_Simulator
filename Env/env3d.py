@@ -150,8 +150,8 @@ class Env(object):
         self.ent = self.calc_entropy(p)
         ent = self.ent
 
-        #self.renderMatrix(p, 'img1')
-        #self.renderMatrix(ent, 'img2')        
+        self.renderMatrix(p, 'img1')
+        self.renderMatrix(self.position2_5D, 'img2')        
 
 
         p = (p - .5) * 2
@@ -294,6 +294,8 @@ class Env(object):
 
         if(all_actions):
             a=self.agentDispatcher.get_legalMaxValAction(a)
+        
+        #if(agent=="lm"):
         
         if False:
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)

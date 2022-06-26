@@ -22,7 +22,7 @@ def add_arguments(parser):
     parser.add_argument('--save_network_path', type=str, default = "saved_dqn_networks/", help='')
     parser.add_argument('--save_summary_path', type=str, default = "dqn_summary/", help='')
 
-    parser.add_argument('--model_path', type=str, default = "results/3Dexperiment/checkpoint.pth", help='model used during testing / visulization') #testmoreFilters.h5
+    parser.add_argument('--model_path', type=str, default = "results/3Dexperiment_extendedReward_good_results/checkpoint.pth", help='model used during testing / visulization') #testmoreFilters.h5
     parser.add_argument('--exp_name', type=str, default = "", help='')
     parser.add_argument('--gpu_frac', type=float, default = 1.0, help='Set GPU use limit for tensorflow')
     parser.add_argument('--ddqn', type=bool, default = False, help='Set True to apply Double Q-learning')

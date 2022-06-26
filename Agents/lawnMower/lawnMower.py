@@ -31,7 +31,7 @@ class lawnMower():
         self._3Ddown=5
         self.action=self._2Dright
         self.hight=6
-        self.env.reset(200)
+        self.env.reset(h_level=False)
         self.done=False
         self.tmp=False
         self._2DEnv=True
@@ -56,7 +56,7 @@ class lawnMower():
 
     def step_in_direction(self,hight_o_ground):
         if not self.tmp:
-            _ , _, self.done, _, _ = self.env.step(self.action, lm=True)
+            self.done = not self.env.agentDispatcher.sim_legal_action(self.action)
         if self._2DEnv:  
             self.lawnMowerTraject()
         else:
@@ -76,30 +76,30 @@ class lawnMower():
         if self.done==True and self.direction==0:
                 self.direction=1
                 self.action=self._2Dup
-                self.env.step(self.action)
-                self.env.step(self.action)
-                #self.env.step(self.action)
+                self.env.step(self.action,h_level=False)
+                self.env.step(self.action,h_level=False)
                 self.tmp=False
         elif self.done==False and self.direction==0:
             self.action=self._2Dright
             
         elif self.done==True and self.direction==1:
             self.action=self._2Dup
-            self.env.step(self.action)
-            self.env.step(self.action)
+            self.env.step(self.action,h_level=False)
+            self.env.step(self.action,h_level=False)
             #elf.env.step(self.action)
             self.direction=0
             self.tmp=False
         elif self.done==False and self.direction==1:
             self.action=self._2Dleft
 
-    def make_action(self, obs):
+    def make_action(self, obs,_):
         self.counter=self.counter+1
-        attitude=self.env.pose.pose_matrix[:3,3]
+        attitude=self.env.agentDispatcher.uav.pose.pose_matrix[:3,3]
+        #print(attitude)
         a_x=int(np.rint(attitude[0]))
         a_y=int(np.rint(attitude[1]))
         a_z=int(np.rint(attitude[2]))
-        map=self.env.real_2_D_map[:,:,0]
+        map=self.env.loaded_env.map_2_5D[:,:,0]
         ground_UUV = map[a_x,a_y]
         hight_o_ground= a_z-ground_UUV
         action = self.step_in_direction(hight_o_ground)
