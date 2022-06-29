@@ -246,6 +246,7 @@ class Env(object):
     
     
     def got_stucked(self, a):
+        not_legal_a=-1
         crr_p=np.copy(self.uav_state_pos[0:2]) #current 2D position
         counter=0
         if len(self.fifo)>22:
@@ -255,34 +256,20 @@ class Env(object):
             if np.array_equal(a_p,crr_p):
                 counter+=1
             
-            #if 1==idx%2:
-            #    if np.array_equal(a_p,crr_p):
-            #        counterMod2+=1
-            #if 0==idx%2:
-            #    if np.array_equal(a_p,crr_p):
-            #        counterMod2_+=1
-            #if 1==idx%3:
-            #    if np.array_equal(a_p,crr_p):
-            #        counterMod3+=1
-            #if 0==idx%3:
-            #    if np.array_equal(a_p,crr_p):
-            #        counterMod3_+=1
-        
-        if counter>4:# or counterMod2_ >4 or counterMod3>4 or counterMod3_>4:
-            #print("stucked")
+        if counter>4:
             a_n=np.random.random_integers(7)
-            #a_n=self.last_a
             done=False
             while not done:
                 if self.agentDispatcher.sim_legal_action(a_n) :
                     a=a_n
                     done=True
                 else:
+                    not_legal_a=a_n
                     a_n=np.random.random_integers(7)
         #else:
             #self.last_a=a
         self.fifo.insert(0,crr_p)
-        return a  
+        return a, not_legal_a 
 
     
     def step(self, a, all_actions=False, h_level=True, agent=""):
@@ -290,7 +277,7 @@ class Env(object):
         self.reward = 0.0
         self.done = False
 
-        a=self.got_stucked(a)
+        a, a_n=self.got_stucked(a)
 
         if(all_actions):
             a=self.agentDispatcher.get_legalMaxValAction(a)
@@ -309,7 +296,7 @@ class Env(object):
             entr_new=self.calc_reward(belief)
         self.belief=belief
         if h_level:
-            return self.get_hLevel_observation(), self.reward, a, self.done, self.timeout#np.sum(entr_new)
+            return self.get_hLevel_observation(), self.reward, a, a_n, self.done, self.timeout#np.sum(entr_new)
         else:
             return self.get_observation(), self.reward, self.done, a, self.timeout
 

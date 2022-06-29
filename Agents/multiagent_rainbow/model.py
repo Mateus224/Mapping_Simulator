@@ -120,7 +120,7 @@ class DQN_ResNet(nn.Module):
 
     filters = [128, 128, 256, 256, 1024]
     self.layer0 = nn.Sequential(
-      nn.Conv2d(4, 128, kernel_size=5, stride=1, padding=1),
+      nn.Conv2d(4, 128, kernel_size=3, stride=1, padding=1),
       #nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
       #nn.BatchNorm2d(64),
 
@@ -196,7 +196,7 @@ class DQN(nn.Module):
     self.atoms = args.atoms
     self.action_space = action_space
     self.convs = nn.Sequential(nn.Conv2d(4, 64, 5, stride=2, padding=1), nn.ReLU(),
-                                 nn.Conv2d(64, 128, 3, stride=1, padding=0), nn.ReLU(),
+                                 nn.Conv2d(64, 128, 3, stride=2, padding=0), nn.ReLU(),
                                  nn.Conv2d(128, 256, 2, stride=1, padding=0), nn.ReLU(), nn.Flatten())
     self.num_features_before_fcnn = functools.reduce(operator.mul, list(self.convs(torch.rand(1, *(4,32,32))).shape))
     #self.conv_output_size = 3136

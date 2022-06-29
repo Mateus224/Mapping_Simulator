@@ -76,9 +76,11 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, action, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
+                next_state, reward, done, action, ill_action, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
                 sum_reward=sum_reward+reward
                 mem.append(state, action, reward, done)  # Append transition to memory
+                if ill_action>=0:
+                    mem.append(state, ill_action, reward, True)
 
                 # Train and test
 
@@ -134,7 +136,7 @@ def init(args, env, agent, config):
                 t1 = time.time()
                 #print(t1-t0, 'tot')
 
-                if j<=350:# and False== done:
+                if j<=349:# and False== done:
                     metrics['steps'][i].append(env.t)
 
                     #print(env.t)
@@ -149,6 +151,7 @@ def init(args, env, agent, config):
                     false_positive=np.where(env.reward_map_bel-env.loaded_env.map_2_5D[:,:,1]>0,1,0)
                     
                     f_p=np.sum(false_positive)+f_p
+                    print(i)
                     print(f_p)
                     print(env.litter)
                     #metrics['litter'][i].append(env.litter)
