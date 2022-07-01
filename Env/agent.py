@@ -254,7 +254,7 @@ class Agent():
             min_z = self.real_2_D_map[self.x0][self.y0][0]
             assert min_z!=self.zn or min_z+1!=self.zn or min_z+1!=self.zn-1
 
-            self.z0= 14 #np.random.randint((min_z+1), (self.zn/2-2))
+            self.z0= 12 #np.random.randint((min_z+1), (self.zn/2-2))
             self.rotation=random_axis_angle()
         else:
             self.x0, self.y0, self.z0 = self.init_pose[0], self.init_pose[1], self.init_pose[2]
