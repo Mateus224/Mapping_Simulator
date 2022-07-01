@@ -150,8 +150,8 @@ class Env(object):
         self.ent = self.calc_entropy(p)
         ent = self.ent
 
-        self.renderMatrix(p, 'img1')
-        self.renderMatrix(self.position2_5D, 'img2')        
+        #self.renderMatrix(p, 'img1')
+        #self.renderMatrix(self.position2_5D, 'img2')        
 
 
         p = (p - .5) * 2
@@ -227,7 +227,7 @@ class Env(object):
             
             reward=0.0
             if self.done==False:
-                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/100)
+                reward=(np.sum(self.reward_map_bel)-np.sum(reward_map_bel))+((np.sum(self.reward_map_entr)-np.sum(reward_map_entr))/25)
 
             del reward_map_entr
             del reward_map_bel
@@ -264,6 +264,7 @@ class Env(object):
                     a=a_n
                     done=True
                 else:
+                    print('notLegal')
                     not_legal_a=a_n
                     a_n=np.random.random_integers(7)
         #else:
@@ -277,7 +278,7 @@ class Env(object):
         self.reward = 0.0
         self.done = False
 
-        a, a_n=self.got_stucked(a)
+        a, a_not=self.got_stucked(a)
 
         if(all_actions):
             a=self.agentDispatcher.get_legalMaxValAction(a)
@@ -289,16 +290,18 @@ class Env(object):
         else:
             #self._entr_map = np.where(self.entr_map<=0, 0, self.entr_map)
             #self.entr_map, self.reward, self.done = self.agentDispatcher.act(self.entr_map,a,h_level)
-            belief, self.reward, self.done = self.agentDispatcher.act(self.belief,h_level,a)
+            belief, a_notL, a, self.reward, self.done = self.agentDispatcher.act(self.belief,h_level,a)
+        if a_not<a_notL:
+            a_not=a_notL
         if self.t >= 400:#self.episode_length:
             self.timeout = True  
         if agent=="rainbow" or agent=="PPO":
             entr_new=self.calc_reward(belief)
         self.belief=belief
         if h_level:
-            return self.get_hLevel_observation(), self.reward, a, a_n, self.done, self.timeout#np.sum(entr_new)
+            return self.get_hLevel_observation(), self.reward, a, a_not, self.done, self.timeout#np.sum(entr_new)
         else:
-            return self.get_observation(), self.reward, self.done, a, self.timeout
+            return self.get_observation(), self.reward, self.done, a, a_not, self.timeout
 
     # Uses loss of life as terminal signal
     def train(self):

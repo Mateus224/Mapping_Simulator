@@ -56,13 +56,11 @@ def init(args, env, agent, config):
                     state, _ = env.reset(h_level=False)
 
 
-                    litter=env.litter
-                    print(sum_reward,'------', litter)#,(sum_reward+(0.35*done))/(env.start_entr_map))
-                    #print(np.nanmax(env.loaded_env.map_2_5D),'max height')
+
                     sum_reward=0
                     state, _ = env.reset(h_level=False)
                     episode+=1
-                    writer.add_scalar("Litter", litter, episode)
+                    writer.add_scalar("Litter",  np.sum(env.reward_map_bel) , episode)
 
                 #action = agent.epsilon_greedy(T,2, state)
 
@@ -78,10 +76,12 @@ def init(args, env, agent, config):
 
                 next_state, reward, done, action, ill_action, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
                 sum_reward=sum_reward+reward
-                mem.append(state, action, reward, done)  # Append transition to memory
+                  # Append transition to memory
+                
                 if ill_action>=0:
-                    mem.append(state, ill_action, reward, True)
-
+                    mem.append(state, ill_action, 0, True)
+                    
+                mem.append(state, action, reward, done)
                 # Train and test
 
                 if T >= 100000:#args.learn_start:

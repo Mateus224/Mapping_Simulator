@@ -119,15 +119,17 @@ class AgentDispatcher():
 
     def singleprocess_action(self, belief, uav_action, uuv_action, h_level=True):
         #done=self.uav.make_action(uav_action, self.uav.pose.pose_matrix, self.uav.sensor_model.sensor_matrix)
+        a_notL=-1
         if not self.sim_legal_action(uav_action):
-                a_n=np.random.random_integers(7)
-                done=False
-                while not done:
-                    if self.sim_legal_action(a_n) :
-                        uav_action=a_n
-                        done=True
-                    else:
-                        a_n=np.random.random_integers(7)
+            a_n=np.random.random_integers(7)
+            done=False
+            a_notL=uav_action
+            while not done:
+                if self.sim_legal_action(a_n) :
+                    uav_action=a_n
+                    done=True
+                else:
+                    a_n=np.random.random_integers(7)
         done=self.uav.make_action(uav_action, self.uav.pose.pose_matrix, self.uav.sensor_model.sensor_matrix)
         if done:
             print(done,"!!!!")
@@ -143,8 +145,8 @@ class AgentDispatcher():
         #reward_uuv=entropy[int(self.uuv.pose.pose_matrix[0,3]),int(self.uuv.pose.pose_matrix[1,3])]-0.2*entropy[int(self.uuv.pose.pose_matrix[0,3]),int(self.uuv.pose.pose_matrix[1,3])]
         
         #entropy[int(self.uuv.pose.pose_matrix[0,3]),int(self.uuv.pose.pose_matrix[1,3])]= 0.2*entropy[int(self.uuv.pose.pose_matrix[0,3]),int(self.uuv.pose.pose_matrix[1,3])]
-        if done:
-            reward_uav=-0.35
+        #if done:
+        #    reward_uav=-0.35
         else:
             if h_level==True:
                 
@@ -154,14 +156,14 @@ class AgentDispatcher():
                 belief, _ = self.uav.sensor_model.readSonarData(belief, self.update_map, 0)
                 #print(self.update_map)
                 reward_uav=None
-        return belief, reward_uav, done
+        return belief, a_notL, uav_action, reward_uav, done
     
     def act(self, belief, h_level,uav_action,  uuv_action=None, multiprocess=False):
         if multiprocess:
             belief, reward_uav, done=self.multiprocess_action(belief, uav_action=0, uuv_action=0)
         else:
-            belief, reward_uav, done=self.singleprocess_action(belief, uav_action, uuv_action, h_level)
-        return belief, reward_uav, done
+            belief, a_notL, a, reward_uav, done=self.singleprocess_action(belief, uav_action, uuv_action, h_level)
+        return belief, a_notL,a, reward_uav, done
 
 
     def get_legalMaxValAction(self, actions):
@@ -266,7 +268,7 @@ class Agent():
         elif action_space==1:
             action_set = self.actions.ACTIONS3D
         new_position=self.pose.pose_matrix[:3,3] + action_set[action][:3]
-        legal_pos=self.legal_change_in_pose(new_position,_2D=False, test=2)
+        legal_pos=self.legal_change_in_pose(new_position,_2D=False)
         return legal_pos
 
     def sim_actions(self,actionArr):
@@ -392,7 +394,7 @@ class Agent():
         hashkey = 1000000*x+1000*y+z
         if hashkey in self.hashmap:
             print("COLLISION ! ! !", x,y,z)
-            print(self.real_2_D_map)
+            #print(self.real_2_D_map)
             return False
         else:
             return True
@@ -405,7 +407,7 @@ class Agent():
             return True
 
 
-    def legal_change_in_pose(self, new_position, sub_map_border=None, _2D=True, test=1): 
+    def legal_change_in_pose(self, new_position, sub_map_border=None, _2D=True): 
         in_sub_map=True
         if sub_map_border!=None:
             in_sub_map=self.in_sub_map(new_position, sub_map_border)

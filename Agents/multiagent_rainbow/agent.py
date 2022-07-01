@@ -21,8 +21,8 @@ class Multiagent_rainbow():
 
     self.action_space = 8#env.action_space()
     self.atoms = args.atoms
-    self.Vmin = -0.35#args.V_min
-    self.Vmax = 72#args.V_max
+    self.Vmin = 0#args.V_min
+    self.Vmax = 104#args.V_max
 
     self.support = torch.linspace(self.Vmin, self.Vmax, self.atoms).to(device=args.device)  # Support (range) of z
     self.delta_z = (self.Vmax - self.Vmin) / (self.atoms - 1)
@@ -95,7 +95,6 @@ class Multiagent_rainbow():
     # Calculate current state probabilities (online network noise already sampled)
     log_ps = self.online_net(states, log=True)  # Log probabilities log p(s_t, ·; θonline)
     log_ps_a = log_ps[range(self.batch_size), actions]  # log p(s_t, a_t; θonline)
-
     with torch.no_grad():
       # Calculate nth next state probabilities
       pns = self.online_net(next_states)  # Probabilities p(s_t+n, ·; θonline)
@@ -122,6 +121,8 @@ class Multiagent_rainbow():
       m.view(-1).index_add_(0, (u + offset).view(-1), (pns_a * (b - l.float())).view(-1))  # m_u = m_u + p(s_t+n, a*)(b - l)
 
     loss = -torch.sum(m * log_ps_a, 1)  # Cross-entropy loss (minimises DKL(m||p(s_t, a_t)))
+    loss_n = -torch.sum(m * log_ps_a, 1) 
+    loss_n=loss
     self.online_net.zero_grad()
     (weights * loss).mean().backward()  # Backpropagate importance-weighted minibatch loss
     clip_grad_norm_(self.online_net.parameters(), self.norm_clip)  # Clip gradients by L2 norm
