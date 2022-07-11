@@ -32,7 +32,7 @@ def init(args, env, agent, config):
     t=np.arange(800)
     run_noCrash=False
     episode=0
-    all_actions=False
+    all_actions=True
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
@@ -111,6 +111,7 @@ def init(args, env, agent, config):
         f_p=0 
         experiments=0
         simulate=False
+        agent.eval()
         for i in range(List1_row):
             j=0
             done=False
@@ -134,7 +135,7 @@ def init(args, env, agent, config):
                 t1 = time.time()
                 #print(t1-t0, 'tot')
 
-                if j<=350:# and False== done:
+                if j<=349:# and False== done:
                     metrics['steps'][i].append(env.t)
 
                     #print(env.t)

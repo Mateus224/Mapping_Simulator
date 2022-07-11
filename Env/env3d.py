@@ -65,7 +65,7 @@ class Env(object):
             format='.xyz'
             folder='Env/xyz_env/xyz/' 
         else:
-            self.episode=self.episode+1
+            self.episode=5#self.episode+1
             map=str(self.episode)
             format='_val.xyz'
             folder='Env/xyz_env/xyz/val/'
@@ -151,7 +151,8 @@ class Env(object):
         ent = self.ent
 
         self.renderMatrix(p, 'img1')
-        self.renderMatrix(self.position2_5D, 'img2')        
+        
+             
 
 
         p = (p - .5) * 2
@@ -172,6 +173,8 @@ class Env(object):
         self.uav_last_poseX,self.uav_last_poseY =int(self.uav_state_pos[0]), int(self.uav_state_pos[1])
         if not self.done:
             self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
+        self.renderMatrix(self.position2_5D, 'position')  
+        self.renderMatrix((self.loaded_env.map_2_5D[:,:,0]/self.zn), "hight")
 
         #self.renderMatrix(self.position2_5D, 'pos')
         #self.renderMatrix(self.loaded_env.map_2_5D[:,:,0]/self.zn, 'h')

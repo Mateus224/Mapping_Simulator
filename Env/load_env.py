@@ -58,7 +58,7 @@ class Load_env():
         upSideDown_rand=False
         #upSideDown=True
         if upSideDown:
-            upSideDown_rand=np.random.random_integers(2)-1
+            upSideDown_rand=1#np.random.random_integers(2)-1
 
         voxelgrid_id = cloud.add_structure("voxelgrid", n_x=self.xn, n_y=self.yn, n_z=self.zn)
         voxelgrid = cloud.structures[voxelgrid_id]
