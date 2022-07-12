@@ -31,10 +31,11 @@ class Multiagent_rainbow():
     self.discount = 0.99 #args.discount
     self.norm_clip = args.norm_clip
     self.device=args.device
+    self.channels=5
 
     #self.online_net = DQN(args, self.action_space).to(device=args.device)
-    self.online_net = DQN_ResNet(args, self.action_space, ResBlock, [2,2,2,2]).to(self.device)
-    summary(self.online_net, (4, 32, 32))
+    self.online_net = DQN_ResNet(args, self.action_space, ResBlock, [2,2,2,2], self.channels).to(self.device)
+    summary(self.online_net, (5, 32, 32))
     if args.load_net:  # Load pretrained model if provided
       if os.path.isfile(args.model_path):
         checkpoint = torch.load(args.model_path, map_location=torch.device(self.device))
@@ -52,7 +53,7 @@ class Multiagent_rainbow():
     self.online_net.train()
 
     #self.target_net = DQN(args, self.action_space).to(device=args.device)
-    self.target_net = DQN_ResNet(args,self.action_space, ResBlock, [2,2,2,2]).to(device=args.device)
+    self.target_net = DQN_ResNet(args,self.action_space, ResBlock, [2,2,2,2], self.channels).to(device=args.device)
     self.update_target_net()
     self.target_net.train()
     for param in self.target_net.parameters():

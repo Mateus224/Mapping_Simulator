@@ -113,14 +113,14 @@ class ResBlock(nn.Module):
 
 
 class DQN_ResNet(nn.Module):
-  def __init__(self, args, action_space, resblock, repeat):
+  def __init__(self, args, action_space, resblock, repeat, channels):
     super(DQN_ResNet, self).__init__()
     self.atoms = args.atoms
     self.action_space = action_space
 
     filters = [128, 128, 256, 256, 1024]
     self.layer0 = nn.Sequential(
-      nn.Conv2d(4, 128, kernel_size=3, stride=1, padding=1),
+      nn.Conv2d(channels, 128, kernel_size=3, stride=1, padding=1),
       #nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
       #nn.BatchNorm2d(64),
 

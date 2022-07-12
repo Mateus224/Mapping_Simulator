@@ -67,6 +67,7 @@ def init(args, env, agent, config):
                 #action = agent.epsilon_greedy(T,2, state)
 
                 action = agent.epsilon_greedy(T,5000000, state, all_actions)
+                print(action,'action')
 
                 #if T % args.replay_frequency == 0:
 

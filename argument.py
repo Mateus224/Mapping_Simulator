@@ -10,7 +10,7 @@ def add_arguments(parser):
     parser.add_argument('--final_epsilon', type=float, default = 0.1, help='Final value of epsilon in epsilon-greedy')
     parser.add_argument('--initial_replay_size', type=int, default =100000, help='Number of steps to populate the replay memory before training starts')
 
-    parser.add_argument('--num_replay_memory', type=int, default = 1500000, help='Number of replay memory the agent uses for training')
+    parser.add_argument('--num_replay_memory', type=int, default = 1500, help='Number of replay memory the agent uses for training')
 
     parser.add_argument('--batch_size', type=int, default = 32, help='Mini batch size')
     parser.add_argument('--target_update_interval', type=int, default = 10000, help='The frequency with which the target network is updated')
