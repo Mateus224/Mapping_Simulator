@@ -417,7 +417,7 @@ class Agent():
         hashkey = 1000000*x+1000*y+z
         if hashkey in self.hashmap:
             print("COLLISION ! ! !", x,y,z)
-            print(self.real_2_D_map)
+            #print(self.real_2_D_map)
             return False
         else:
             return True
