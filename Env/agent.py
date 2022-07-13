@@ -157,8 +157,8 @@ class AgentDispatcher():
         if self.b_multiagent:
             pass
         else:
-            action=self.uav.sim_actions(actions)
-        return action
+            sorted_arg_actions,  i=self.uav.sim_actions(actions)
+        return sorted_arg_actions, i
 
     def greedy_multiagent_chose_action(self, belief):
         action_new=self.sim_greedy(belief)
@@ -265,10 +265,8 @@ class Agent():
             action_set = self.actions.ACTIONS3D 
         elif self.action_space==2:
             action_set = self.actions.ACTIONS_cont_3D
-        print(actionArr)
         sorted_actions=np.argsort(actionArr.cpu().detach().numpy())[::-1]
-        print(sorted_actions)
-        for i in np.nditer(sorted_actions):
+        for i in range(sorted_actions.shape[0]):
             action=sorted_actions[i]
             R_t=np.matmul(np.matmul(matrix_from_axis_angle([1, 0, 0, action_set[action][3]]), \
                     matrix_from_axis_angle([0, 1, 0, action_set[action][4]])), \
@@ -276,11 +274,9 @@ class Agent():
             
             self.pose.Sim_pose_matrix=np.matmul(self.pose.pose_matrix[:3,:3],R_t[:3,:3])   
             new_position=np.matmul(self.pose.Sim_pose_matrix[:3,:3],action_set[action][:3])
-            print(new_position, 'new relativ position')
             new_position=self.pose.pose_matrix[:3,3]+new_position
-            print(new_position,i,'aaaaa', self.legal_change_in_pose(new_position, _2D=False))
             if self.legal_change_in_pose(new_position, _2D=False):
-                return action
+                return sorted_actions, i
         assert True, f"no legal action chosen"
                 
         
