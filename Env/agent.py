@@ -360,16 +360,13 @@ class Agent():
             action_set = self.actions.ACTIONS3D 
         elif self.action_space==2:
             action_set = self.actions.ACTIONS_cont_3D
-        print('make action:',action)
         R_t=np.matmul(np.matmul(matrix_from_axis_angle([1, 0, 0, action_set[action][3]]), \
                 matrix_from_axis_angle([0, 1, 0, action_set[action][4]])), \
                 matrix_from_axis_angle([0, 0, 1, action_set[action][5]]))
             
         np_pose_matrix[:3,:3]=np.matmul(np_pose_matrix[:3,:3],R_t[:3,:3])   
         new_position=np.matmul(np_pose_matrix[:3,:3],action_set[action][:3])
-        print(new_position, 'new relativ position')
         new_position=np_pose_matrix[:3,3]+new_position
-        print(new_position)
         np_pose_matrix[:3,3]= new_position
         #np_pose_matrix[:3,:3]= np.matmul(np_pose_matrix[:3,:3],R_t[:3,:3])
         np_sensor_matrix[:,:,:3,3]= new_position
@@ -385,7 +382,6 @@ class Agent():
     
     
     def in_map(self, new_pos):
-        print(self.xn-1)
         return new_pos[0] >= 1 and new_pos[1] >= 1 and new_pos[0] < (self.xn-1) and new_pos[1] < (self.yn-1) and new_pos[2] >= 0 and new_pos[2] <= (self.zn)#(self.zn/2-1)
 
     def in_sub_map(self, new_pos,sub_map_border):
@@ -416,7 +412,7 @@ class Agent():
         z = int(np.rint(new_pos[2]))
         hashkey = 1000000*x+1000*y+z
         if hashkey in self.hashmap:
-            print("COLLISION ! ! !", x,y,z)
+            #print("COLLISION ! ! !", x,y,z)
             #print(self.real_2_D_map)
             return False
         else:
@@ -436,5 +432,4 @@ class Agent():
         if _2D:
             return self.in_map(new_position) and not self._2Dcollision(new_position) and in_sub_map
         else:
-            print(self.in_map(new_position), self.no_collision(new_position), self.legal_rotation(new_position))
             return self.in_map(new_position) and self.no_collision(new_position) and self.legal_rotation(new_position)
