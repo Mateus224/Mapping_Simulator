@@ -32,7 +32,7 @@ def init(args, env, agent, config):
     t=np.arange(800)
     run_noCrash=False
     episode=0
-    all_actions=True
+    all_actions=False
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:

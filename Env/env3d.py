@@ -295,6 +295,7 @@ class Env(object):
 
         a=self.got_stucked(a)
 
+
         if(all_actions):
             a=self.agentDispatcher.get_legalMaxValAction(a)
         
