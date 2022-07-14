@@ -265,7 +265,10 @@ class Agent():
             action_set = self.actions.ACTIONS3D 
         elif self.action_space==2:
             action_set = self.actions.ACTIONS_cont_3D
-        sorted_actions=np.argsort(actionArr.cpu().detach().numpy())[::-1]
+        if type(actionArr).__module__=="numpy":
+            sorted_actions=np.argsort(actionArr)[::-1]
+        else:
+            sorted_actions=np.argsort(actionArr.cpu().detach().numpy())[::-1]
         for i in range(sorted_actions.shape[0]):
             action=sorted_actions[i]
             R_t=np.matmul(np.matmul(matrix_from_axis_angle([1, 0, 0, action_set[action][3]]), \
@@ -360,16 +363,13 @@ class Agent():
             action_set = self.actions.ACTIONS3D 
         elif self.action_space==2:
             action_set = self.actions.ACTIONS_cont_3D
-        print('make action:',action)
         R_t=np.matmul(np.matmul(matrix_from_axis_angle([1, 0, 0, action_set[action][3]]), \
                 matrix_from_axis_angle([0, 1, 0, action_set[action][4]])), \
                 matrix_from_axis_angle([0, 0, 1, action_set[action][5]]))
             
         np_pose_matrix[:3,:3]=np.matmul(np_pose_matrix[:3,:3],R_t[:3,:3])   
         new_position=np.matmul(np_pose_matrix[:3,:3],action_set[action][:3])
-        print(new_position, 'new relativ position')
         new_position=np_pose_matrix[:3,3]+new_position
-        print(new_position)
         np_pose_matrix[:3,3]= new_position
         #np_pose_matrix[:3,:3]= np.matmul(np_pose_matrix[:3,:3],R_t[:3,:3])
         np_sensor_matrix[:,:,:3,3]= new_position
@@ -385,7 +385,6 @@ class Agent():
     
     
     def in_map(self, new_pos):
-        print(self.xn-1)
         return new_pos[0] >= 1 and new_pos[1] >= 1 and new_pos[0] < (self.xn-1) and new_pos[1] < (self.yn-1) and new_pos[2] >= 0 and new_pos[2] <= (self.zn)#(self.zn/2-1)
 
     def in_sub_map(self, new_pos,sub_map_border):
