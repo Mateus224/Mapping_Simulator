@@ -177,15 +177,15 @@ class BayesianSensor():
     def init_render_sensor(self, fig):
         R=[[1,0,0],[0,1,0],[0,0,1]]
         P = np.zeros((20, 3))
-        colors = np.empty((20-1, 3))
-        for d in range(colors.shape[1]):
-            P[:, d] = np.linspace(0, self.sensor_range, len(P))
-            colors[:, d] = np.linspace(0, 1, len(colors))
+        colors = np.zeros((20-1, 3))
+        print(len(P))
+        for d in range(3):
+            P[:, d] = np.linspace(0, self.sensor_range/np.sqrt(3), len(P),endpoint=False)
+            colors[:, d] = np.linspace(0, 1, len(colors), endpoint=False)
         eye=np.eye(4)
         eye[:3,:3]=R
         lines = list()
         for i in range(self.num_beams*self.num_rays):
-            print(i,'a')
             lines.append(fig.plot(P, eye, colors))
 
         #fig.view_init()

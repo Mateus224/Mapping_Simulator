@@ -76,12 +76,15 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, action, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
+                next_state, reward, done, actions, sim_i, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
                 sum_reward=sum_reward+reward
-                mem.append(state, action, reward, done)  # Append transition to memory
+                 # Append transition to memory
 
                 # Train and test
-
+                if sim_i>0:
+                    for j in range(sim_i-1):
+                        mem.append(state, actions[j], 0, True)
+                mem.append(state, actions[sim_i], reward, done) 
                 if T >= 100000:#args.learn_start:
                     mem.priority_weight = min(mem.priority_weight + priority_weight_increase, 1)  # Anneal importance sampling weight β to 1
 
