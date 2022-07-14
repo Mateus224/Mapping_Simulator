@@ -150,7 +150,7 @@ class Env(object):
         self.ent = self.calc_entropy(p)
         ent = self.ent
 
-        self.renderMatrix(p, 'img1')
+        #self.renderMatrix(p, 'img1')
         
              
 
@@ -181,9 +181,9 @@ class Env(object):
             self.position2_5D[self.uav_last_poseX+1,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
             self.rotation_matrix[self.uav_last_poseX-1:self.uav_last_poseX+2,self.uav_last_poseY-1:self.uav_last_poseY+2]=\
                     np.copy(self.agentDispatcher.uav.pose.pose_matrix[:3,:3])
-        self.renderMatrix(self.position2_5D, 'position')  
-        self.renderMatrix(self.rotation_matrix, 'rotation')  
-        self.renderMatrix((self.loaded_env.map_2_5D[:,:,0]/self.zn), "hight")
+        #self.renderMatrix(self.position2_5D, 'position')  
+        #self.renderMatrix(self.rotation_matrix, 'rotation')  
+        #self.renderMatrix((self.loaded_env.map_2_5D[:,:,0]/self.zn), "hight")
 
         #self.renderMatrix(self.position2_5D, 'pos')
         #self.renderMatrix(self.loaded_env.map_2_5D[:,:,0]/self.zn, 'h')
