@@ -277,9 +277,7 @@ class Agent():
             self.pose.Sim_pose_matrix=np.matmul(self.pose.pose_matrix[:3,:3],R_t[:3,:3])   
             new_position=np.matmul(self.pose.Sim_pose_matrix[:3,:3],action_set[action][:3])
             new_position=self.pose.pose_matrix[:3,3]+new_position
-            print(new_position)
             if self.legal_change_in_pose(new_position, _2D=False):
-                print( sorted_actions, i)
                 return sorted_actions, i
         print('ff')
         assert True, f"no legal action chosen"
