@@ -10,12 +10,12 @@ def add_arguments(parser):
     parser.add_argument('--final_epsilon', type=float, default = 0.1, help='Final value of epsilon in epsilon-greedy')
     parser.add_argument('--initial_replay_size', type=int, default =100000, help='Number of steps to populate the replay memory before training starts')
 
-    parser.add_argument('--num_replay_memory', type=int, default = 1500, help='Number of replay memory the agent uses for training')
+    parser.add_argument('--num_replay_memory', type=int, default = 1500000, help='Number of replay memory the agent uses for training')
 
     parser.add_argument('--batch_size', type=int, default = 32, help='Mini batch size')
     parser.add_argument('--target_update_interval', type=int, default = 10000, help='The frequency with which the target network is updated')
     parser.add_argument('--train_interval', type=int, default = 4, help='The agent selects 4 actions between successive updates')
-    parser.add_argument('--learning_rate', type=float, default = 0.000001, help='Learning rate used by RMSProp')
+    parser.add_argument('--learning_rate', type=float, default = 0.00001, help='Learning rate used by RMSProp')
     parser.add_argument('--min_grad', type=float, default = 1e-8, help='Constant added to the squared gradient in the denominator of the RMSProp update')
     parser.add_argument('--save_interval', type=int, default = 25000, help='The frequency with which the network is saved')
     parser.add_argument('--no_op_steps', type=int, default = 10, help='Maximum number of "do nothing" actions to be performed by the agent at the start of an episode')
