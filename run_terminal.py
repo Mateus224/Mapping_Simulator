@@ -133,7 +133,7 @@ def init(args, env, agent, config):
                 
                 action = agent.make_action(state, all_actions)
                 
-                state, reward, done,a, timeout = env.step(action,all_actions, h_level=False, agent="rainbow")
+                next_state, reward, done, actions, sim_i, timeout = env.step(action,all_actions, h_level=False, agent="rainbow")
                 #if(j%1000==0):
                 t1 = time.time()
                 #print(t1-t0, 'tot')
