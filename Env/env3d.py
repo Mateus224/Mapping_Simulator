@@ -179,8 +179,8 @@ class Env(object):
             self.position2_5D[self.uav_last_poseX-1,self.uav_last_poseY]=2*((self.uav_state_pos[0]/ self.xn) - 0.5)
             self.position2_5D[self.uav_last_poseX,self.uav_last_poseY]=2*((self.uav_state_pos[1]/ self.yn) - 0.5)
             self.position2_5D[self.uav_last_poseX+1,self.uav_last_poseY]=2*((self.uav_state_pos[2]/ self.zn) - 0.5)
-            self.rotation_matrix[self.uav_last_poseX-1:self.uav_last_poseX+2,self.uav_last_poseY-1:self.uav_last_poseY+2]=\
-                    np.copy(self.agentDispatcher.uav.pose.pose_matrix[:3,:3])
+            #self.rotation_matrix[self.uav_last_poseX-1:self.uav_last_poseX+2,self.uav_last_poseY-1:self.uav_last_poseY+2]=\
+            #        np.copy(self.agentDispatcher.uav.pose.pose_matrix[:3,:3])
         #self.renderMatrix(self.position2_5D, 'position')  
         #self.renderMatrix(self.rotation_matrix, 'rotation')  
         #self.renderMatrix((self.loaded_env.map_2_5D[:,:,0]/self.zn), "hight")
@@ -191,7 +191,7 @@ class Env(object):
         state=np.concatenate([np.expand_dims(2*((self.loaded_env.map_2_5D[:,:,0]/self.zn)-0.5),axis=-1), np.expand_dims(p, axis=-1)], axis=-1)
         state=np.concatenate((state,np.expand_dims(ent, axis=-1)), axis=-1)
         state=np.concatenate((state,np.expand_dims(self.position2_5D, axis=-1)), axis=-1)
-        state=np.concatenate((state,np.expand_dims(self.rotation_matrix, axis=-1)), axis=-1)
+        #state=np.concatenate((state,np.expand_dims(self.rotation_matrix, axis=-1)), axis=-1)
         #self.renderMatrix(self.ent)
 
         return state
@@ -261,17 +261,14 @@ class Env(object):
 
 
     
-    def step(self, a, all_actions=False, h_level=True, agent=""):
+    def step(self, a, h_level=True, agent=""):
         self.t += 1
         self.reward = 0.0
         self.done = False
 
         
-
-
-        if(all_actions):
-            sorted_arg_actions, i=self.agentDispatcher.get_legalMaxValAction(a)
-            a=sorted_arg_actions[i]
+        sorted_arg_actions, i=self.agentDispatcher.get_legalMaxValAction(a)
+        a=sorted_arg_actions[i]
         
         if False:
             self.entr_map, self.reward, self.done = self.agentDispatcher.greedy_multiagent_action(self.entr_map,a,3)
@@ -287,7 +284,7 @@ class Env(object):
         if h_level:
             return self.get_hLevel_observation(), self.reward, a, self.done, self.timeout#np.sum(entr_new)
         else:
-            return self.get_observation(), self.reward, self.done, sorted_arg_actions,i , self.timeout
+            return self.get_observation(), self.reward, self.done, sorted_arg_actions, i , self.timeout
 
     # Uses loss of life as terminal signal
     def train(self):

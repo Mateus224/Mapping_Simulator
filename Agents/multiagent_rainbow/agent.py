@@ -19,7 +19,7 @@ rng = default_rng(12345)
 class Multiagent_rainbow():
   def __init__(self, args, env):
 
-    self.action_space = 8#env.action_space()
+    self.action_space = 6#env.action_space()
     self.atoms = args.atoms
     self.Vmin = -0.35#args.V_min
     self.Vmax = 72#args.V_max
@@ -31,11 +31,11 @@ class Multiagent_rainbow():
     self.discount = 0.99 #args.discount
     self.norm_clip = args.norm_clip
     self.device=args.device
-    self.channels=5
+    self.channels=4
 
     #self.online_net = DQN(args, self.action_space).to(device=args.device)
     self.online_net = DQN_ResNet(args, self.action_space, ResBlock, [2,2,2,2], self.channels).to(self.device)
-    summary(self.online_net, (5, 32, 32))
+    summary(self.online_net, (self.channels, 32, 32))
     if args.load_net:  # Load pretrained model if provided
       if os.path.isfile(args.model_path):
         print(args.model_path)

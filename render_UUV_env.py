@@ -52,7 +52,7 @@ def animation_callback1(step, n_frames, frame, frame_debug, uav, uuv, uav_beams,
 
     if True:
         action = agent.make_action(obs, True)
-        obs, reward, done, _, _ , _= env.step(action, all_actions=True, h_level=False, agent="rainbow")
+        obs, reward, done, _, _ , _= env.step(action,  h_level=False, agent="rainbow")
         uav_pose=env.agentDispatcher.uav.pose.pose_matrix.copy()
         if b_multiagent:
             uuv_pose=env.agentDispatcher.uuv.pose.pose_matrix.copy()

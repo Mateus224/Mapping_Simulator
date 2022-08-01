@@ -32,7 +32,7 @@ def init(args, env, agent, config):
     t=np.arange(800)
     run_noCrash=False
     episode=0
-    all_actions=False
+    all_actions=True
     if args.train:
         agent.train()
         if type(agent)==Multiagent_rainbow:
@@ -76,7 +76,7 @@ def init(args, env, agent, config):
 
                   # Choose an action greedily (with noisy weights)
 
-                next_state, reward, done, actions, sim_i, timeout = env.step(action,all_actions=all_actions, h_level=False, agent="rainbow")  # Step
+                next_state, reward, done, actions, sim_i, timeout = env.step(action, h_level=False, agent="rainbow")  # Step
                 sum_reward=sum_reward+reward
                  # Append transition to memory
 
@@ -133,7 +133,7 @@ def init(args, env, agent, config):
                 
                 action = agent.make_action(state, all_actions)
                 
-                next_state, reward, done, actions, sim_i, timeout = env.step(action,all_actions, h_level=False, agent="rainbow")
+                next_state, reward, done, actions, sim_i, timeout = env.step(action, h_level=False, agent="rainbow")
                 #if(j%1000==0):
                 t1 = time.time()
                 #print(t1-t0, 'tot')
